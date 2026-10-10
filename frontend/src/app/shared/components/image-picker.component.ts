@@ -1,6 +1,5 @@
 import {
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
   Component,
   ElementRef,
   EventEmitter,
@@ -81,9 +80,8 @@ import { IconComponent } from './icon.component';
             <div class="mt-2.5">
               <button
                 type="button"
-                class="nb-btn bg-white hover:bg-neutral-100 text-black px-3 py-1 rounded text-xs font-black gap-1.5 inline-flex cursor-pointer"
+                class="nb-btn bg-white hover:bg-neutral-100 text-black px-3 py-1 rounded text-xs font-black gap-1.5 inline-flex"
                 [disabled]="disabled"
-                (click)="startPick()"
               >
                 <dt-icon name="plus" sizeClass="w-3.5 h-3.5" />
                 <span>Seleccionar imagen</span>
@@ -158,11 +156,11 @@ import { IconComponent } from './icon.component';
                 class="w-full nb-btn bg-[#FFE600] hover:bg-[#FFD700] text-black py-3 px-4 rounded-md font-black flex items-center justify-start gap-3 cursor-pointer"
                 (click)="chooseCamera()"
               >
-                <div class="w-9 h-9 bg-white border-2 border-black text-black rounded flex items-center justify-center shrink-0 nb-shadow-sm">
-                  <dt-icon name="camera" sizeClass="w-5 h-5 text-black" />
+                <div class="w-9 h-9 bg-black text-[#FFE600] rounded flex items-center justify-center shrink-0">
+                  <dt-icon name="camera" sizeClass="w-5 h-5" />
                 </div>
                 <div class="text-left">
-                  <span class="block text-[10px] uppercase font-black tracking-wider text-black/80">Opción 1 · Cámara</span>
+                  <span class="block text-[10px] uppercase font-black tracking-wider text-black/70">Opción 1 · Cámara</span>
                   <span class="block text-sm font-black text-black">Tomar foto ahora</span>
                 </div>
               </button>
@@ -170,15 +168,15 @@ import { IconComponent } from './icon.component';
               <!-- Option 2: Gallery / Explorer -->
               <button
                 type="button"
-                class="w-full nb-btn bg-white hover:bg-neutral-100 text-black dark:text-white py-3 px-4 rounded-md font-black flex items-center justify-start gap-3 cursor-pointer"
+                class="w-full nb-btn bg-white hover:bg-neutral-100 text-black py-3 px-4 rounded-md font-black flex items-center justify-start gap-3 cursor-pointer"
                 (click)="chooseGallery()"
               >
-                <div class="w-9 h-9 bg-[#FFE600] border-2 border-black text-black rounded flex items-center justify-center shrink-0 nb-shadow-sm">
-                  <dt-icon name="image" sizeClass="w-5 h-5 text-black" />
+                <div class="w-9 h-9 bg-black text-white rounded flex items-center justify-center shrink-0">
+                  <dt-icon name="image" sizeClass="w-5 h-5" />
                 </div>
                 <div class="text-left">
-                  <span class="block text-[10px] uppercase font-black tracking-wider text-black/70 dark:text-gray-300">Opción 2 · Galería</span>
-                  <span class="block text-sm font-black text-black dark:text-white">Explorar fotos / archivos</span>
+                  <span class="block text-[10px] uppercase font-black tracking-wider text-black/70">Opción 2 · Galería</span>
+                  <span class="block text-sm font-black text-black">Explorar fotos / archivos</span>
                 </div>
               </button>
             </div>
@@ -211,7 +209,6 @@ export class ImagePickerComponent implements OnDestroy {
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
   @ViewChild('cameraInput') cameraInput!: ElementRef<HTMLInputElement>;
 
-  private readonly cdr = inject(ChangeDetectorRef);
   readonly modalLock = inject(ModalLockService);
   showMobileOptions = false;
 
@@ -231,8 +228,8 @@ export class ImagePickerComponent implements OnDestroy {
     const ua = navigator.userAgent || '';
     const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
     const isCoarse = window.matchMedia('(pointer: coarse)').matches;
-    const isMobileWidth = window.innerWidth <= 768;
-    return isMobileUA || isCoarse || isMobileWidth;
+    const isSmall = window.innerWidth <= 1024;
+    return isMobileUA || (isCoarse && isSmall);
   }
 
   startPick(): void {
@@ -241,7 +238,6 @@ export class ImagePickerComponent implements OnDestroy {
       // Mobile: Give 2 options (Camera or Gallery)
       this.showMobileOptions = true;
       this.modalLock.lock();
-      this.cdr.markForCheck();
     } else {
       // PC: Directly open file explorer!
       this.fileInput.nativeElement.click();
@@ -265,7 +261,6 @@ export class ImagePickerComponent implements OnDestroy {
   closeMobileOptions(): void {
     this.showMobileOptions = false;
     this.modalLock.unlock();
-    this.cdr.markForCheck();
   }
 
   onFileInputChange(event: Event): void {
@@ -281,3 +276,4 @@ export class ImagePickerComponent implements OnDestroy {
     this.cleared.emit();
   }
 }
+
