@@ -12,15 +12,29 @@ import { IconComponent } from './icon.component';
     <div class="min-h-screen flex flex-col bg-[#F8F6EE] text-black">
       <!-- Top Navbar: Neobrutalist Banner -->
       <header class="bg-white border-b-[3px] border-black px-4 sm:px-6 sticky top-0 z-30 h-16 flex items-center justify-between">
-        <!-- Brand Logo & Name (Clean, alone, no crowded tags) -->
-        <a routerLink="/" class="flex items-center gap-3 text-black no-underline">
-          <div class="w-9 h-9 bg-[#FFE600] border-2 border-black rounded-md flex items-center justify-center nb-shadow-sm shrink-0">
-            <img src="assets/dt-mark.svg" alt="DawerTech" class="w-6 h-6" />
-          </div>
-          <span class="text-xl font-black tracking-tight leading-none text-[#2a2f63]">DawerTech</span>
-        </a>
+        <!-- Left Section: Mobile Hamburger (only on screens < lg) + Brand Logo -->
+        <div class="flex items-center gap-2.5 sm:gap-3">
+          <!-- Mobile Hamburger Toggle (Left side where drawer opens, hidden on desktop/laptop >= lg) -->
+          <button
+            type="button"
+            class="lg:!hidden nb-btn bg-white hover:bg-[#FFE600] w-9 h-9 rounded-md text-black shrink-0"
+            (click)="openMobileMenu()"
+            title="Abrir menú de navegación"
+            aria-label="Abrir menú de navegación"
+          >
+            <dt-icon name="menu" sizeClass="w-5 h-5" />
+          </button>
 
-        <!-- Right Quick Actions: Nuevo repuesto, Profile, and Mobile Hamburger -->
+          <!-- Brand Logo & Name -->
+          <a routerLink="/" class="flex items-center gap-2.5 sm:gap-3 text-black no-underline">
+            <div class="w-9 h-9 bg-[#FFE600] border-2 border-black rounded-md flex items-center justify-center nb-shadow-sm shrink-0">
+              <img src="assets/dt-mark.svg" alt="DawerTech" class="w-6 h-6" />
+            </div>
+            <span class="text-xl font-black tracking-tight leading-none text-[#2a2f63]">DawerTech</span>
+          </a>
+        </div>
+
+        <!-- Right Quick Actions: Nuevo repuesto, Theme, Profile -->
         <div class="flex items-center gap-2 sm:gap-3">
           <a routerLink="/parts/new" class="nb-btn bg-[#FFE600] hover:bg-[#FFD700] text-black px-3 py-1.5 rounded-md text-xs sm:text-sm font-black gap-1.5">
             <dt-icon name="plus" sizeClass="w-4 h-4" />
@@ -119,17 +133,6 @@ import { IconComponent } from './icon.component';
               </div>
             }
           </div>
-
-          <!-- Mobile Hamburger Toggle (Right side, separated from brand) -->
-          <button
-            type="button"
-            class="lg:hidden nb-btn bg-white hover:bg-[#FFE600] w-9 h-9 rounded-md text-black"
-            (click)="openMobileMenu()"
-            title="Abrir menú de navegación"
-            aria-label="Abrir menú de navegación"
-          >
-            <dt-icon name="menu" sizeClass="w-5 h-5" />
-          </button>
         </div>
       </header>
 

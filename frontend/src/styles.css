@@ -89,84 +89,86 @@ ion-app {
   box-shadow: 8px 8px 0px var(--nb-shadow);
 }
 
-/* Neobrutalist Button Component */
-.nb-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 800;
-  border: 2.5px solid var(--nb-border);
-  box-shadow: 3px 3px 0px var(--nb-shadow);
-  transition: transform 0.08s ease, box-shadow 0.08s ease, background-color 0.1s ease;
-  cursor: pointer;
-  user-select: none;
-  text-decoration: none;
-}
+@layer components {
+  /* Neobrutalist Button Component */
+  .nb-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    border: 2.5px solid var(--nb-border);
+    box-shadow: 3px 3px 0px var(--nb-shadow);
+    transition: transform 0.08s ease, box-shadow 0.08s ease, background-color 0.1s ease;
+    cursor: pointer;
+    user-select: none;
+    text-decoration: none;
+  }
 
-.nb-btn:hover:not(:disabled) {
-  transform: translate(-1px, -1px);
-  box-shadow: 4px 4px 0px var(--nb-shadow);
-}
+  .nb-btn:hover:not(:disabled) {
+    transform: translate(-1px, -1px);
+    box-shadow: 4px 4px 0px var(--nb-shadow);
+  }
 
-.nb-btn:active:not(:disabled) {
-  transform: translate(2px, 2px);
-  box-shadow: 1px 1px 0px var(--nb-shadow);
-}
+  .nb-btn:active:not(:disabled) {
+    transform: translate(2px, 2px);
+    box-shadow: 1px 1px 0px var(--nb-shadow);
+  }
 
-.nb-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: 2px 2px 0px var(--nb-shadow);
-}
+  .nb-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: 2px 2px 0px var(--nb-shadow);
+  }
 
-/* Neobrutalist Cards */
-.nb-card {
-  background-color: var(--nb-card);
-  border: 2.5px solid var(--nb-border);
-  box-shadow: 4px 4px 0px var(--nb-shadow);
-  color: var(--nb-text);
-  transition: background-color 0.15s ease, border-color 0.15s ease;
-}
+  /* Neobrutalist Cards */
+  .nb-card {
+    background-color: var(--nb-card);
+    border: 2.5px solid var(--nb-border);
+    box-shadow: 4px 4px 0px var(--nb-shadow);
+    color: var(--nb-text);
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+  }
 
-/* Neobrutalist Badge / Tag */
-.nb-badge {
-  display: inline-flex;
-  align-items: center;
-  font-weight: 800;
-  font-size: 0.75rem;
-  border: 2px solid var(--nb-border);
-  box-shadow: 2px 2px 0px var(--nb-shadow);
-  padding: 0.15rem 0.5rem;
-}
+  /* Neobrutalist Badge / Tag */
+  .nb-badge {
+    display: inline-flex;
+    align-items: center;
+    font-weight: 800;
+    font-size: 0.75rem;
+    border: 2px solid var(--nb-border);
+    box-shadow: 2px 2px 0px var(--nb-shadow);
+    padding: 0.15rem 0.5rem;
+  }
 
-/* Neobrutalist Form Inputs */
-.nb-input {
-  border: 2.5px solid var(--nb-border);
-  background-color: var(--nb-input);
-  color: var(--nb-text);
-  font-weight: 600;
-  box-shadow: 2.5px 2.5px 0px var(--nb-shadow);
-  outline: none;
-  transition: box-shadow 0.1s ease, transform 0.1s ease, background-color 0.15s ease;
-}
+  /* Neobrutalist Form Inputs */
+  .nb-input {
+    border: 2.5px solid var(--nb-border);
+    background-color: var(--nb-input);
+    color: var(--nb-text);
+    font-weight: 600;
+    box-shadow: 2.5px 2.5px 0px var(--nb-shadow);
+    outline: none;
+    transition: box-shadow 0.1s ease, transform 0.1s ease, background-color 0.15s ease;
+  }
 
-.nb-input:focus {
-  box-shadow: 4px 4px 0px var(--nb-shadow);
-  background-color: var(--nb-input);
-}
+  .nb-input:focus {
+    box-shadow: 4px 4px 0px var(--nb-shadow);
+    background-color: var(--nb-input);
+  }
 
-/* Native dialog styling for Neobrutalist modals */
-dialog.nb-modal {
-  border: 3.5px solid var(--nb-border);
-  box-shadow: 8px 8px 0px var(--nb-shadow);
-  background-color: var(--nb-card);
-  color: var(--nb-text);
-  max-width: 95vw;
-}
+  /* Native dialog styling for Neobrutalist modals */
+  dialog.nb-modal {
+    border: 3.5px solid var(--nb-border);
+    box-shadow: 8px 8px 0px var(--nb-shadow);
+    background-color: var(--nb-card);
+    color: var(--nb-text);
+    max-width: 95vw;
+  }
 
-dialog.nb-modal::backdrop {
-  background: rgba(0, 0, 0, 0.75);
+  dialog.nb-modal::backdrop {
+    background: rgba(0, 0, 0, 0.75);
+  }
 }
 
 /* Global absolute scroll lock for any active modal */
