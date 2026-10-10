@@ -121,13 +121,20 @@ def check_modal_scroll_locks() -> list[str]:
 
 def check_single_database() -> list[str]:
     violations = []
-    # Check for unauthorized test databases in backend
+
+    # 1. Prohibit any sqlite database in the project ROOT
+    for f in ROOT.glob("*.sqlite*"):
+        violations.append(
+            f"[REGLA 2 - BASE DE DATOS UNICA] Se encontro base de datos no autorizada en la raiz del proyecto: {f.name}. La base de datos debe residir exclusivamente en backend/inventory.sqlite3"
+        )
+
+    # 2. Check for unauthorized test databases in backend
     backend_dir = ROOT / "backend"
     if backend_dir.exists():
         for f in backend_dir.glob("*.sqlite*"):
             if f.name not in {"inventory.sqlite3", "inventory.sqlite3-shm", "inventory.sqlite3-wal"}:
                 violations.append(
-                    f"[REGLA 2 - BASE DE DATOS UNICA] Se encontro base de datos no autorizada: {f.name}. Solo se permite inventory.sqlite3"
+                    f"[REGLA 2 - BASE DE DATOS UNICA] Se encontro base de datos no autorizada en backend: {f.name}. Solo se permite backend/inventory.sqlite3"
                 )
     return violations
 
