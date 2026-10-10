@@ -3,11 +3,11 @@ import { FormsModule } from '@angular/forms';
 
 import { ApiService, ModalLockService, ToastService } from '../../../core/services';
 import { Device } from '../../../core/models';
-import { IconComponent } from '../../../shared/components';
+import { IconComponent, ImagePickerComponent } from '../../../shared/components';
 
 @Component({
   standalone: true,
-  imports: [FormsModule, IconComponent],
+  imports: [FormsModule, IconComponent, ImagePickerComponent],
   template: `
     <!-- Header -->
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
@@ -186,27 +186,13 @@ import { IconComponent } from '../../../shared/components';
 
             <!-- Image Picker for Device -->
             <div>
-              <label class="block text-xs font-black uppercase text-black mb-1">Fotografía del celular (opcional)</label>
-              <div class="flex items-center gap-3">
-                @if (imagePreview) {
-                  <div class="w-14 h-14 border-2 border-black rounded-md overflow-hidden bg-white shrink-0 relative">
-                    <img [src]="imagePreview" alt="Vista previa" class="w-full h-full object-cover" />
-                  </div>
-                }
-                <div class="flex-1">
-                  <input
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp"
-                    (change)="onImageSelected($event)"
-                    class="nb-input w-full p-1.5 text-xs rounded file:nb-btn file:bg-[#FFE600] file:text-black file:text-xs file:font-black file:py-1 file:px-2 file:rounded file:mr-2 file:border-black cursor-pointer"
-                  />
-                  @if (imagePreview) {
-                    <button type="button" class="text-[10px] font-black text-red-600 hover:underline mt-1 block" (click)="clearSelectedImage()">
-                      Quitar imagen seleccionada
-                    </button>
-                  }
-                </div>
-              </div>
+              <dt-image-picker
+                label="Fotografía del celular (opcional)"
+                hint="PNG, JPEG o WebP hasta 5 MB"
+                [previewUrl]="imagePreview"
+                (fileSelected)="onDeviceFileSelected($event)"
+                (cleared)="clearSelectedImage()"
+              />
             </div>
 
             @if (formError) {
@@ -331,14 +317,13 @@ export class DevicesComponent implements OnInit, OnDestroy {
     this.imagePreview = null;
   }
 
-  onImageSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    if (file) {
-      this.selectedImageFile = file;
-      this.imagePreview = URL.createObjectURL(file);
-      this.cdr.markForCheck();
+  onDeviceFileSelected(file: File): void {
+    this.selectedImageFile = file;
+    if (this.imagePreview) {
+      URL.revokeObjectURL(this.imagePreview);
     }
+    this.imagePreview = URL.createObjectURL(file);
+    this.cdr.markForCheck();
   }
 
   clearSelectedImage(): void {

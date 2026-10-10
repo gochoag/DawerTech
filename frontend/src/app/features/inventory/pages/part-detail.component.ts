@@ -4,11 +4,11 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { ApiService, ModalLockService, ToastService } from '../../../core/services';
 import { Device, Movement, Part, localDate, money } from '../../../core/models';
-import { IconComponent } from '../../../shared/components';
+import { IconComponent, ImagePickerComponent } from '../../../shared/components';
 
 @Component({
   standalone: true,
-  imports: [FormsModule, RouterLink, IconComponent],
+  imports: [FormsModule, RouterLink, IconComponent, ImagePickerComponent],
   template: `
     <!-- Top Back and Header (Centered Container) -->
     <div [class]="isNew ? 'max-w-3xl mx-auto space-y-6' : 'max-w-5xl mx-auto space-y-6'">
@@ -292,28 +292,13 @@ import { IconComponent } from '../../../shared/components';
               </div>
 
               <!-- Photo Upload Block on Creation -->
-              <div class="p-4 bg-[#FFFDF0] border-2 border-black rounded-lg">
-                <label class="block text-xs font-black uppercase text-black mb-1">
-                  Fotografía del repuesto (opcional)
-                </label>
-                <p class="text-[11px] font-bold text-black/60 mb-2">
-                  Puedes seleccionar una foto ahora; se subirá automáticamente al registrar el repuesto.
-                </p>
-
-                @if (selectedPhotoPreview) {
-                  <div class="flex items-center gap-3 my-2">
-                    <img [src]="selectedPhotoPreview" alt="Vista previa" class="w-20 h-20 object-contain rounded border-2 border-black bg-white" />
-                    <button type="button" class="nb-btn bg-white hover:bg-red-100 text-red-600 px-2 py-1 text-xs font-black rounded" (click)="clearSelectedPhoto()">
-                      Quitar foto
-                    </button>
-                  </div>
-                }
-
-                <input
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp"
-                  (change)="onPhotoFileChange($event)"
-                  class="nb-input w-full p-1.5 text-xs rounded file:nb-btn file:bg-[#FFE600] file:text-black file:text-xs file:font-black file:py-1 file:px-2 file:rounded file:mr-2 file:border-black cursor-pointer"
+              <div class="p-4 bg-[#FFFDF0] dark:bg-[#1E2028] border-2 border-black rounded-lg">
+                <dt-image-picker
+                  label="Fotografía del repuesto (opcional)"
+                  hint="Puedes tomar una foto o elegirla de archivos. Se subirá automáticamente al crear."
+                  [previewUrl]="selectedPhotoPreview"
+                  (fileSelected)="onPhotoFileSelected($event)"
+                  (cleared)="clearSelectedPhoto()"
                 />
               </div>
 
@@ -738,15 +723,12 @@ import { IconComponent } from '../../../shared/components';
 
                 <!-- Photo Upload Card in Edit View -->
                 <div class="nb-card p-5 rounded-lg">
-                  <h3 class="text-xs font-black uppercase text-black mb-2">Fotografía del repuesto</h3>
-                  @if (imageUrl) {
-                    <img class="w-full max-h-48 object-contain rounded border-2 border-black bg-[#F8F6EE] my-2" [src]="imageUrl" [alt]="part.name" />
-                  }
-                  <input
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp"
-                    (change)="upload($event)"
-                    class="nb-input w-full p-1.5 text-xs rounded mt-2 file:nb-btn file:bg-[#FFE600] file:text-black file:text-xs file:font-black file:py-1 file:px-2 file:rounded file:mr-2 file:border-black cursor-pointer"
+                  <dt-image-picker
+                    label="Fotografía del repuesto"
+                    hint="PNG, JPEG o WebP hasta 5 MB"
+                    [previewUrl]="imageUrl"
+                    (fileSelected)="uploadDirectPhoto($event)"
+                    (cleared)="removeCurrentPhoto()"
                   />
                 </div>
 
@@ -1233,9 +1215,7 @@ export class PartDetailComponent implements OnInit, OnDestroy {
     if (this.timer) clearTimeout(this.timer);
   }
 
-  onPhotoFileChange(event: Event): void {
-    const file = (event.target as HTMLInputElement).files?.[0];
-    if (!file) return;
+  onPhotoFileSelected(file: File): void {
     this.selectedPhotoFile = file;
     if (this.selectedPhotoPreview) URL.revokeObjectURL(this.selectedPhotoPreview);
     this.selectedPhotoPreview = URL.createObjectURL(file);
@@ -1465,9 +1445,8 @@ export class PartDetailComponent implements OnInit, OnDestroy {
     }
   }
 
-  async upload(event: Event): Promise<void> {
-    const file = (event.target as HTMLInputElement).files?.[0];
-    if (!file || !this.part) return;
+  async uploadDirectPhoto(file: File): Promise<void> {
+    if (!this.part) return;
     this.error = '';
     try {
       await this.api.uploadImage(this.part.id, file);
@@ -1481,5 +1460,13 @@ export class PartDetailComponent implements OnInit, OnDestroy {
     } finally {
       this.cdr.markForCheck();
     }
+  }
+
+  removeCurrentPhoto(): void {
+    if (this.imageUrl) {
+      URL.revokeObjectURL(this.imageUrl);
+      this.imageUrl = '';
+    }
+    this.cdr.markForCheck();
   }
 }
