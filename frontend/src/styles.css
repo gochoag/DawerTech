@@ -1,0 +1,480 @@
+@import "tailwindcss";
+@source "./app/**/*.{html,ts}";
+
+/* Override dark variant to support class-based toggling (.dark) in Tailwind v4 */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Core Ionic wrapper tokens */
+@import "@ionic/angular/css/core.css";
+
+/* Neobrutalism Design Tokens */
+:root {
+  --nb-black: #000000;
+  --nb-bg: #F8F6EE;
+  --nb-card: #FFFFFF;
+  --nb-card-inner: #F8F6EE;
+  --nb-input: #FFFFFF;
+  --nb-text: #000000;
+  --nb-text-muted: rgba(0, 0, 0, 0.65);
+  --nb-border: #000000;
+  --nb-shadow: #000000;
+  --nb-yellow: #FFE600;
+  --nb-cyan: #38BDF8;
+  --nb-green: #4ADE80;
+  --nb-red: #FF5A5F;
+  --nb-purple: #C084FC;
+}
+
+.dark {
+  --nb-black: #000000;
+  --nb-bg: #101114;
+  --nb-card: #181A20;
+  --nb-card-inner: #21242C;
+  --nb-input: #21242C;
+  --nb-text: #F9FAFB;
+  --nb-text-muted: #9CA3AF;
+  --nb-border: #383D4A;
+  --nb-shadow: #000000;
+  --nb-yellow: #FFE600;
+  --nb-cyan: #38BDF8;
+  --nb-green: #4ADE80;
+  --nb-red: #FF5A5F;
+  --nb-purple: #C084FC;
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  background-color: var(--nb-bg);
+  color: var(--nb-text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+ion-app {
+  overflow-y: auto;
+  overflow-x: hidden;
+  background-color: var(--nb-bg);
+}
+
+/* Neobrutalism Core Primitives */
+.nb-border {
+  border: 2.5px solid var(--nb-border);
+}
+
+.nb-border-sm {
+  border: 1.5px solid var(--nb-border);
+}
+
+.nb-border-lg {
+  border: 3.5px solid var(--nb-border);
+}
+
+.nb-shadow {
+  box-shadow: 4px 4px 0px var(--nb-shadow);
+}
+
+.nb-shadow-sm {
+  box-shadow: 2px 2px 0px var(--nb-shadow);
+}
+
+.nb-shadow-lg {
+  box-shadow: 6px 6px 0px var(--nb-shadow);
+}
+
+.nb-shadow-xl {
+  box-shadow: 8px 8px 0px var(--nb-shadow);
+}
+
+/* Neobrutalist Button Component */
+.nb-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  border: 2.5px solid var(--nb-border);
+  box-shadow: 3px 3px 0px var(--nb-shadow);
+  transition: transform 0.08s ease, box-shadow 0.08s ease, background-color 0.1s ease;
+  cursor: pointer;
+  user-select: none;
+  text-decoration: none;
+}
+
+.nb-btn:hover:not(:disabled) {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0px var(--nb-shadow);
+}
+
+.nb-btn:active:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0px var(--nb-shadow);
+}
+
+.nb-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: 2px 2px 0px var(--nb-shadow);
+}
+
+/* Neobrutalist Cards */
+.nb-card {
+  background-color: var(--nb-card);
+  border: 2.5px solid var(--nb-border);
+  box-shadow: 4px 4px 0px var(--nb-shadow);
+  color: var(--nb-text);
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+/* Neobrutalist Badge / Tag */
+.nb-badge {
+  display: inline-flex;
+  align-items: center;
+  font-weight: 800;
+  font-size: 0.75rem;
+  border: 2px solid var(--nb-border);
+  box-shadow: 2px 2px 0px var(--nb-shadow);
+  padding: 0.15rem 0.5rem;
+}
+
+/* Neobrutalist Form Inputs */
+.nb-input {
+  border: 2.5px solid var(--nb-border);
+  background-color: var(--nb-input);
+  color: var(--nb-text);
+  font-weight: 600;
+  box-shadow: 2.5px 2.5px 0px var(--nb-shadow);
+  outline: none;
+  transition: box-shadow 0.1s ease, transform 0.1s ease, background-color 0.15s ease;
+}
+
+.nb-input:focus {
+  box-shadow: 4px 4px 0px var(--nb-shadow);
+  background-color: var(--nb-input);
+}
+
+/* Native dialog styling for Neobrutalist modals */
+dialog.nb-modal {
+  border: 3.5px solid var(--nb-border);
+  box-shadow: 8px 8px 0px var(--nb-shadow);
+  background-color: var(--nb-card);
+  color: var(--nb-text);
+  max-width: 95vw;
+}
+
+dialog.nb-modal::backdrop {
+  background: rgba(0, 0, 0, 0.75);
+}
+
+/* Global absolute scroll lock for any active modal */
+body.modal-open,
+html.modal-open,
+main.modal-open,
+body.modal-open main {
+  overflow: hidden !important;
+  touch-action: none !important;
+  overscroll-behavior: none !important;
+}
+
+/* =========================================================
+   Neobrutalist Dark Mode Global Adaptations
+   Preserves crisp WCAG contrast, sharp borders and bold accents.
+   Strictly scoped under .dark — Light Mode remains 100% untouched.
+   ========================================================= */
+
+/* Background surfaces in dark mode */
+.dark .bg-\[\#F8F6EE\],
+.dark .bg-\[\#FBF8EF\] {
+  background-color: #101114 !important;
+}
+
+.dark .bg-\[\#FFFDF0\] {
+  background-color: #1B1E26 !important;
+}
+
+.dark .bg-white {
+  background-color: #181A20 !important;
+}
+
+.dark header.bg-white,
+.dark aside.bg-white,
+.dark nav.bg-white {
+  background-color: #14161B !important;
+  border-color: #383D4A !important;
+}
+
+/* Base typography in dark mode */
+.dark .text-black {
+  color: #F9FAFB !important;
+}
+
+.dark .text-black\/90,
+.dark .text-black\/85,
+.dark .text-black\/80 {
+  color: #F3F4F6 !important;
+}
+
+.dark .text-black\/70,
+.dark .text-black\/65,
+.dark .text-black\/60 {
+  color: #D1D5DB !important;
+}
+
+.dark .text-black\/50,
+.dark .text-black\/40 {
+  color: #9CA3AF !important;
+}
+
+.dark .text-\[\#2563EB\] {
+  color: #60A5FA !important;
+}
+
+.dark .text-\[\#2a2f63\] {
+  color: #FFFFFF !important;
+}
+
+/* Borders and dividers in dark mode */
+.dark .border-black {
+  border-color: #383D4A !important;
+}
+
+.dark .border-black\/20,
+.dark .border-black\/15,
+.dark .border-black\/10,
+.dark .border-neutral-200 {
+  border-color: #2D323E !important;
+}
+
+.dark .divide-black > :not([hidden]) ~ :not([hidden]) {
+  border-color: #383D4A !important;
+}
+
+.dark .divide-black\/10 > :not([hidden]) ~ :not([hidden]),
+.dark .divide-black\/15 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #2D323E !important;
+}
+
+/* Secondary surface backgrounds in dark mode */
+.dark .bg-neutral-50,
+.dark .bg-neutral-100 {
+  background-color: #1F222B !important;
+}
+
+.dark .bg-neutral-200 {
+  background-color: #232732 !important;
+  color: #D1D5DB !important;
+  border-color: #383D4A !important;
+}
+
+.dark .bg-neutral-200 * {
+  color: #D1D5DB !important;
+}
+
+/* Clean hover states in dark mode */
+.dark .hover\:bg-neutral-50:hover,
+.dark .hover\:bg-neutral-100:hover,
+.dark .hover\:bg-black\/5:hover {
+  background-color: #262933 !important;
+}
+
+.dark .hover\:bg-\[\#FFFDF0\]:hover {
+  background-color: #22252E !important;
+}
+
+.dark tr.hover\:bg-\[\#FFFDF0\]:hover {
+  background-color: #22252E !important;
+}
+
+/* White buttons and chips default appearance in dark mode */
+.dark .nb-btn.bg-white,
+.dark button.nb-btn.bg-white {
+  background-color: #21242C !important;
+  color: #F9FAFB !important;
+  border-color: #383D4A !important;
+}
+
+.dark .nb-btn.bg-white *,
+.dark button.nb-btn.bg-white * {
+  color: #F9FAFB !important;
+  stroke: #F9FAFB !important;
+}
+
+/* Interactive elements hovering to yellow #FFE600 must ALWAYS turn yellow with black text/icons */
+.dark .hover\:bg-\[\#FFE600\]:hover,
+.dark [class*="hover:bg-[#FFE600]"]:hover {
+  background-color: #FFE600 !important;
+  color: #000000 !important;
+  border-color: #000000 !important;
+}
+
+.dark .hover\:bg-\[\#FFE600\]:hover *,
+.dark [class*="hover:bg-[#FFE600]"]:hover * {
+  color: #000000 !important;
+  stroke: #000000 !important;
+}
+
+/* Accent Containers (KPI cards, bright badges):
+   Ensure bold, solid, 100% opaque, high-contrast black text inside vibrant backgrounds in all modes */
+.dark .bg-\[\#FFE600\],
+.dark .bg-\[\#FFD700\],
+.dark .bg-\[\#38BDF8\],
+.dark .bg-\[\#4ADE80\],
+.dark .bg-\[\#FB923C\],
+.dark .bg-\[\#F87171\] {
+  color: #000000 !important;
+}
+
+.dark .bg-\[\#FFE600\] *,
+.dark .bg-\[\#FFD700\] *,
+.dark .bg-\[\#38BDF8\] *,
+.dark .bg-\[\#4ADE80\] *,
+.dark .bg-\[\#FB923C\] *,
+.dark .bg-\[\#F87171\] * {
+  color: #000000 !important;
+  stroke: #000000 !important;
+}
+
+.dark .bg-\[\#FFE600\] [class*="text-black"],
+.dark .bg-\[\#FFD700\] [class*="text-black"],
+.dark .bg-\[\#38BDF8\] [class*="text-black"],
+.dark .bg-\[\#4ADE80\] [class*="text-black"],
+.dark .bg-\[\#FB923C\] [class*="text-black"],
+.dark .bg-\[\#F87171\] [class*="text-black"] {
+  color: #000000 !important;
+  opacity: 1 !important;
+}
+
+/* Inner white icon boxes inside vibrant accent cards stay crisp white with black icon */
+.dark .bg-\[\#FFE600\] .bg-white,
+.dark .bg-\[\#38BDF8\] .bg-white,
+.dark .bg-\[\#4ADE80\] .bg-white,
+.dark .bg-\[\#F87171\] .bg-white,
+.dark .bg-\[\#FF5A5F\] .bg-white {
+  background-color: #FFFFFF !important;
+  color: #000000 !important;
+  border-color: #000000 !important;
+}
+
+.dark .bg-\[\#FFE600\] .bg-white *,
+.dark .bg-\[\#38BDF8\] .bg-white *,
+.dark .bg-\[\#4ADE80\] .bg-white *,
+.dark .bg-\[\#F87171\] .bg-white *,
+.dark .bg-\[\#FF5A5F\] .bg-white * {
+  color: #000000 !important;
+  stroke: #000000 !important;
+}
+
+/* Red / Crimson buttons and badges contrast in dark mode */
+.dark .bg-\[\#DC2626\],
+.dark .bg-\[\#DC2626\] * {
+  background-color: #DC2626 !important;
+  color: #FFFFFF !important;
+  stroke: #FFFFFF !important;
+}
+
+/* Red alert card text contrast */
+.dark .bg-\[\#FF5A5F\],
+.dark .bg-\[\#FF5A5F\] * {
+  color: #FFFFFF !important;
+  stroke: #FFFFFF !important;
+}
+
+/* Floating Neobrutalist Toasts */
+.nb-toast-info {
+  background-color: #FFE600 !important;
+  color: #000000 !important;
+  border-color: #000000 !important;
+}
+.nb-toast-info * {
+  color: #000000 !important;
+  stroke: #000000 !important;
+}
+.nb-toast-success {
+  background-color: #4ADE80 !important;
+  color: #000000 !important;
+  border-color: #000000 !important;
+}
+.nb-toast-success * {
+  color: #000000 !important;
+  stroke: #000000 !important;
+}
+.nb-toast-error {
+  background-color: #DC2626 !important;
+  color: #FFFFFF !important;
+  border-color: #000000 !important;
+}
+.nb-toast-error * {
+  color: #FFFFFF !important;
+  stroke: #FFFFFF !important;
+}
+
+/* Native file selector button Neobrutalist styling */
+input[type="file"] {
+  cursor: pointer;
+}
+
+input[type="file"]::file-selector-button {
+  background-color: #FFE600 !important;
+  color: #000000 !important;
+  font-weight: 900 !important;
+  font-size: 0.75rem !important;
+  border: 2px solid #000000 !important;
+  box-shadow: 2px 2px 0px #000000 !important;
+  border-radius: 4px;
+  padding: 0.25rem 0.65rem;
+  margin-right: 0.5rem;
+  cursor: pointer;
+  transition: transform 0.08s ease, background-color 0.1s ease, box-shadow 0.08s ease;
+}
+
+input[type="file"]::file-selector-button:hover {
+  background-color: #FFD700 !important;
+  color: #000000 !important;
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0px #000000 !important;
+}
+
+input[type="file"]::file-selector-button:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0px #000000 !important;
+}
+
+.dark input[type="file"]::file-selector-button {
+  background-color: #FFE600 !important;
+  color: #000000 !important;
+  border-color: #000000 !important;
+}
+
+.dark input[type="file"]::file-selector-button:hover {
+  background-color: #FFD700 !important;
+  color: #000000 !important;
+}
+
+/* Sidebar navigation links */
+.dark aside a.hover\:bg-\[\#FFFDF0\]:hover:not(.\!bg-\[\#FFE600\]):not(.router-link-active) {
+  background-color: #252833 !important;
+  color: #FFE600 !important;
+  border-color: #383D4A !important;
+}
+
+.dark aside a.hover\:bg-\[\#FFFDF0\]:hover:not(.\!bg-\[\#FFE600\]):not(.router-link-active) * {
+  color: #FFE600 !important;
+  stroke: #FFE600 !important;
+}
+
+/* Active navigation links (routerLinkActive) in dark mode: ALWAYS solid black text/icon on yellow */
+.dark .\!bg-\[\#FFE600\],
+.dark .\!bg-\[\#FFE600\] *,
+.dark a.\!bg-\[\#FFE600\],
+.dark a.\!bg-\[\#FFE600\] *,
+.dark a.router-link-active.\!bg-\[\#FFE600\],
+.dark a.router-link-active.\!bg-\[\#FFE600\] * {
+  background-color: #FFE600 !important;
+  color: #000000 !important;
+  stroke: #000000 !important;
+  border-color: #000000 !important;
+}
+
