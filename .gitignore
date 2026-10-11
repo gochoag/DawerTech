@@ -16,6 +16,8 @@ media/
 # Build artifacts & packages
 *.apk
 *.aab
+apk-release/
+frontend/apk-release/
 
 # Logs
 *.log

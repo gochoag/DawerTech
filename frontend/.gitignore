@@ -36,6 +36,7 @@ android/signing/
 # Packaged binaries and outputs
 *.apk
 *.aab
+apk-release/
 
 # Editor & OS files
 .vscode/*

@@ -1,0 +1,9 @@
+{
+  "name": "dawertech",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "android:generate": "pnpm --prefix frontend run android:generate",
+    "android:dev": "pnpm --prefix frontend run android:dev"
+  }
+}
