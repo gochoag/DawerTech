@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">DawerTech</string>
+    <string name="title_activity_main">DawerTech</string>
+    <string name="package_name">com.dawertech.inventory</string>
+    <string name="custom_url_scheme">com.dawertech.inventory</string>
+</resources>

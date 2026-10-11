@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 96" role="img" aria-label="DawerTech">
+  <title>DawerTech</title>
+  <g transform="translate(4, 0)">
+    <path fill="#2a2f63" fill-rule="evenodd" d="M20 14H42C62 14 76 28 76 48S62 82 42 82H20ZM32 26v44h10c13 0 22-9 22-22s-9-22-22-22Z"/>
+    <path fill="#5fb0c9" d="M42.25 35h9.5v8.25H59v9.5h-7.25V61h-9.5v-8.25H37v-9.5h5.25Z"/>
+  </g>
+  <text x="96" y="62" fill="#2a2f63" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="44" font-weight="900" letter-spacing="-1.5">DawerTech</text>
+</svg>

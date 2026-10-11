@@ -1,0 +1,49 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+.npm-cache/
+
+# Angular & Build outputs
+.angular/
+dist/
+www/
+out-tsc/
+bazel-out/
+
+# Dynamic app configuration
+src/assets/config.json
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Gradle & Android builds
+.gradle-user/
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+android/captures/
+
+# Android keystores and signing credentials
+android/*.jks
+android/*.keystore
+android/key.properties
+android/signing/
+
+# Packaged binaries and outputs
+*.apk
+*.aab
+
+# Editor & OS files
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+
