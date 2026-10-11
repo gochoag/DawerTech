@@ -7,3 +7,4 @@
     "android:dev": "pnpm --prefix frontend run android:dev"
   }
 }
+

@@ -4,7 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
 import { AuthService, ThemeService } from '../../../core/services';
-import { API_BASE_URL } from '../../../core/config';
 import { IconComponent } from '../../../shared/components';
 
 @Component({
@@ -99,18 +98,6 @@ import { IconComponent } from '../../../shared/components';
             </div>
 
             @if (auth.isNative) {
-              <div>
-                <label class="block text-xs font-black uppercase text-black mb-1">Dirección de la API</label>
-                <input
-                  type="url"
-                  name="apiUrl"
-                  [(ngModel)]="apiUrl"
-                  required
-                  placeholder="https://tuusuario.pythonanywhere.com/api/v1"
-                  class="nb-input w-full p-2 text-xs font-mono rounded-md"
-                />
-              </div>
-
               <label class="flex items-center gap-2.5 cursor-pointer py-1">
                 <input type="checkbox" name="biometrics" [(ngModel)]="enableBiometric" class="w-4 h-4 border-2 border-black rounded accent-black" />
                 <span class="text-xs font-bold text-black">Habilitar biometría en futuros inicios</span>
@@ -126,7 +113,7 @@ import { IconComponent } from '../../../shared/components';
             <button
               type="submit"
               class="nb-btn bg-[#FFE600] hover:bg-[#FFD700] w-full py-3 rounded-md text-xs sm:text-sm font-black mt-2"
-              [disabled]="loading || !email || !password || (auth.isNative && !apiUrl)"
+              [disabled]="loading || !email || !password"
             >
               {{ loading ? 'Iniciando sesión…' : 'Entrar al inventario' }}
             </button>
@@ -153,7 +140,6 @@ import { IconComponent } from '../../../shared/components';
 export class LoginComponent implements OnInit {
   readonly auth = inject(AuthService);
   readonly theme = inject(ThemeService);
-  private readonly endpoint = inject(API_BASE_URL);
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
 
@@ -161,7 +147,6 @@ export class LoginComponent implements OnInit {
   password = '';
   showPassword = false;
   enableBiometric = false;
-  apiUrl = this.auth.isNative && this.endpoint.current.startsWith('http://localhost') ? '' : this.endpoint.current;
   error = '';
   loading = false;
 
@@ -176,13 +161,10 @@ export class LoginComponent implements OnInit {
     this.loading = true;
     this.error = '';
     try {
-      if (this.auth.isNative) this.endpoint.use(this.apiUrl);
       await this.auth.login(this.email, this.password, this.enableBiometric);
       await this.router.navigateByUrl(this.auth.user()?.must_change_password ? '/account' : '/');
     } catch (problem: unknown) {
-      if (problem instanceof Error && problem.message.includes('URL HTTPS')) {
-        this.error = problem.message;
-      } else if (problem instanceof HttpErrorResponse) {
+      if (problem instanceof HttpErrorResponse) {
         if (problem.status === 0) {
           this.error = 'No se puede conectar con el servidor backend en localhost:5000. Revisa que esté activo.';
         } else if (problem.status === 429) {

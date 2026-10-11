@@ -46,6 +46,13 @@ try {
     }
   } else {
     console.log(`\x1b[32m[OK] Dispositivo(s) conectado(s):\x1b[0m\n  ${connectedDevices.join('\n  ')}`);
+    try {
+      console.log('\n\x1b[36m>>> Configurando túnel ADB: adb reverse tcp:5000 tcp:5000...\x1b[0m');
+      run('adb reverse tcp:5000 tcp:5000');
+      console.log('\x1b[32m[OK] Túnel activo: http://localhost:5000 en el celular conectará directamente a tu PC.\x1b[0m');
+    } catch {
+      console.warn('\x1b[33m[AVISO] adb reverse omitido o no soportado en esta conexión.\x1b[0m');
+    }
   }
 
   // 2. Compilar aplicación web
