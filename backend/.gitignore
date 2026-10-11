@@ -1,0 +1,39 @@
+# Virtual environments (uv / venv)
+.venv/
+env/
+venv/
+ENV/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Packaging and distribution
+build/
+dist/
+eggs/
+*.egg-info/
+*.egg
+
+# Testing & verification
+.pytest_cache/
+.coverage
+htmlcov/
+.verify/
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Local databases and runtime data
+*.sqlite3
+*.sqlite3-shm
+*.sqlite3-wal
+*.sqlite
+*.sqlite-journal
+*.db
+media/
+

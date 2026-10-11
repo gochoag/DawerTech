@@ -3,15 +3,19 @@
 .env.*
 !.env.example
 
-# Databases
+# Databases & Runtime uploads
 *.sqlite3
 *.sqlite3-shm
 *.sqlite3-wal
+*.sqlite
+*.sqlite-journal
+*.db
+media/
+**/media/
 
 # Build artifacts & packages
 *.apk
 *.aab
-*.webp
 
 # Logs
 *.log
@@ -31,12 +35,19 @@ pnpm-debug.log*
 *.py[cod]
 *$py.class
 .pytest_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+env/
 backend/.venv/
 backend/.pytest_cache/
 backend/.verify/
 backend/*.egg-info/
 
 # Frontend patterns
+node_modules/
+**/node_modules/
 frontend/node_modules/
 frontend/.angular/
 frontend/.gradle-user/
@@ -53,6 +64,11 @@ frontend/android/*.keystore
 frontend/android/key.properties
 frontend/android/signing/
 
+# AI Coding Agents & Tooling
+.agents/
+skills-lock.json
+.gemini/
+
 # OS and Editor
 .DS_Store
 Thumbs.db
@@ -62,3 +78,4 @@ Thumbs.db
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+
