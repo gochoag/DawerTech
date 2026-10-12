@@ -16,6 +16,20 @@ En las actualizaciones: realiza un respaldo, sube código, instala dependencias,
 
 ## Cloudflare Pages
 
+Para publicar en una cuenta de Cloudflare distinta de la vinculada a GitHub, usa Direct Upload con el workflow [pages-deployment.yml](../.github/workflows/pages-deployment.yml). El token identifica la cuenta de destino; no requiere instalar la aplicación de Cloudflare en GitHub.
+
+En GitHub, abre **Settings > Secrets and variables > Actions**. Crea los secretos `CLOUDFLARE_API_TOKEN` (permiso **Account > Cloudflare Pages > Edit**, limitado a la cuenta de destino) y `CLOUDFLARE_ACCOUNT_ID`. En **Variables**, configura `DAWERTECH_API_URL` con la URL HTTPS de la API terminada en `/api/v1`. Puedes definir `CLOUDFLARE_PAGES_PROJECT`; si se omite, se usa `dawertech`. La primera publicación requiere que el código local esté subido a GitHub.
+
+Si aún no existe el proyecto Pages, sube el primer commit del workflow con `[skip ci]` en el mensaje. Después abre **Actions > Publicar frontend en Cloudflare Pages > Run workflow**, selecciona `main` y marca **Crear el proyecto Pages**. Esto crea el proyecto y publica `frontend/www/browser`. En ejecuciones posteriores deja esa opción desmarcada. Si el proyecto ya existe, omite su creación. Si la creación tuvo éxito pero la publicación falló, reintenta sin marcar la creación.
+
+El workflow compila con Node.js 26 y pnpm 11.12.0, usa el lockfile y rechaza una API ausente o sin HTTPS. Los siguientes pushes a `main` que modifiquen el frontend o el workflow publican automáticamente. Los cambios exclusivos del backend requieren actualizar y recargar PythonAnywhere por separado.
+
+Toma el dominio real que Cloudflare muestra al publicar (puede incluir un sufijo si el nombre está ocupado). Agrégalo a `DAWERTECH_CORS_ORIGINS` en el `.env` del backend y recarga PythonAnywhere. Por ejemplo: `DAWERTECH_CORS_ORIGINS=https://dawertech.pages.dev,https://localhost`. Si el WSGI establece esta variable directamente, actualiza allí su valor: una variable del proceso tiene prioridad sobre `.env`. Verifica el inicio de sesión, el inventario vacío y el catálogo de celulares desde Pages; `/health` por sí solo no verifica estos flujos.
+
+Documentación oficial: [Direct Upload con GitHub Actions](https://developers.cloudflare.com/pages/how-to/use-direct-upload-with-continuous-integration/) y [crear un proyecto Pages con Wrangler](https://developers.cloudflare.com/pages/get-started/direct-upload/).
+
+Si prefieres la integración nativa de Pages con GitHub en una cuenta compatible:
+
 Configura el directorio raíz como `frontend`, el comando de compilación `pnpm install && pnpm run build` y el directorio de salida `www/browser`. Define la variable de compilación `DAWERTECH_API_URL=https://TU_USUARIO.pythonanywhere.com/api/v1`. Agrega el origen HTTPS exacto de Pages a `DAWERTECH_CORS_ORIGINS` en PythonAnywhere; para Android incluye también `https://localhost`. Recompila la web cuando cambie la URL API. Las rutas internas se resuelven con el fallback SPA de Pages.
 
 ## Android y APK firmado

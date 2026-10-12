@@ -1,0 +1,86 @@
+name: Publicar frontend en Cloudflare Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/pages-deployment.yml'
+  workflow_dispatch:
+    inputs:
+      crear_proyecto:
+        description: Crear el proyecto Pages (solo la primera vez)
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cloudflare-pages-main
+  cancel-in-progress: false
+
+jobs:
+  publicar:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DAWERTECH_API_URL: ${{ vars.DAWERTECH_API_URL }}
+      CLOUDFLARE_PAGES_PROJECT: ${{ vars.CLOUDFLARE_PAGES_PROJECT || 'dawertech' }}
+    steps:
+      - name: Descargar codigo
+        uses: actions/checkout@v6
+
+      - name: Preparar Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '26'
+          package-manager-cache: false
+
+      - name: Validar configuracion de produccion
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          node --input-type=module <<'JS'
+          import { apiUrl } from './frontend/scripts/network-config.mjs';
+          for (const key of ['DAWERTECH_API_URL', 'CLOUDFLARE_API_TOKEN', 'CLOUDFLARE_ACCOUNT_ID']) {
+            if (!process.env[key]?.trim()) throw new Error(`Falta configurar ${key} en GitHub Actions.`);
+          }
+          if (new URL(apiUrl()).protocol !== 'https:') {
+            throw new Error('La API de produccion debe usar HTTPS.');
+          }
+          if (!/^[a-z0-9][a-z0-9-]{0,57}$/.test(process.env.CLOUDFLARE_PAGES_PROJECT)) {
+            throw new Error('El nombre de Pages debe usar letras minusculas, numeros y guiones (maximo 58 caracteres).');
+          }
+          JS
+
+      - name: Preparar pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: '11.12.0'
+          run_install: false
+
+      - name: Instalar dependencias
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile
+
+      - name: Compilar frontend
+        working-directory: frontend
+        run: pnpm run build
+
+      - name: Crear proyecto Pages
+        if: github.event_name == 'workflow_dispatch' && inputs.crear_proyecto
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages project create ${{ env.CLOUDFLARE_PAGES_PROJECT }} --production-branch=main
+
+      - name: Publicar web
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy frontend/www/browser --project-name=${{ env.CLOUDFLARE_PAGES_PROJECT }} --branch=main
