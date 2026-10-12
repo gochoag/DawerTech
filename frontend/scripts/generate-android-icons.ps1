@@ -11,10 +11,11 @@ $sizes = @{
 foreach ($density in $sizes.Keys) {
   $directory = Join-Path $root "android/app/src/main/res/mipmap-$density"
   $icon = Join-Path $root 'src/assets/dt-app-icon.svg'
-  $mark = Join-Path $root 'src/assets/dt-mark.svg'
+  $mark = Join-Path $root 'src/assets/dt-app-foreground.svg'
   $iconSize = $sizes[$density][0]
   $foregroundSize = $sizes[$density][1]
   & $inkscape $icon "--export-filename=$(Join-Path $directory 'ic_launcher.png')" "--export-width=$iconSize"
   & $inkscape $icon "--export-filename=$(Join-Path $directory 'ic_launcher_round.png')" "--export-width=$iconSize"
   & $inkscape $mark "--export-filename=$(Join-Path $directory 'ic_launcher_foreground.png')" "--export-width=$foregroundSize"
+  if ($LASTEXITCODE -ne 0) { throw "No se pudieron generar los iconos para $density" }
 }

@@ -11,6 +11,7 @@ from dawertech.modules.auth.infrastructure.security import require_auth
 from dawertech.modules.devices.infrastructure.orm_models import DeviceORM
 from dawertech.modules.inventory.application.dtos import movement_data, part_data
 from dawertech.modules.inventory.application.movements_use_case import register_movement
+from dawertech.modules.inventory.application.name_matches import find_name_matches
 from dawertech.modules.inventory.application.register_part_use_case import RegisterPartUseCase
 from dawertech.modules.inventory.application.search_compatibility_use_case import SearchCompatibilityUseCase
 from dawertech.modules.inventory.application.sku_generator import generate_smart_sku
@@ -57,6 +58,21 @@ def list_parts():
         page=page,
         limit=limit,
     )
+
+
+@inventory_bp.get("/parts/name-matches")
+@require_auth()
+def part_name_matches():
+    page, limit = pagination()
+    name = required_text({"name": request.args.get("name")}, "name", 160)
+    exclude_id = None
+    if "exclude_id" in request.args:
+        try:
+            exclude_id = int(request.args["exclude_id"])
+        except ValueError:
+            raise ApiProblem("invalid_field", "Revisa el repuesto excluido") from None
+        exclude_id = positive_int({"exclude_id": exclude_id}, "exclude_id")
+    return find_name_matches(name, exclude_id=exclude_id, page=page, limit=limit)
 
 
 @inventory_bp.get("/parts/<int:part_id>")

@@ -56,7 +56,7 @@ import { IconComponent } from '../../../shared/components';
         </div>
 
         <!-- Filter pills -->
-        <div class="flex items-center gap-1.5 overflow-x-auto">
+        <div class="flex flex-wrap items-center gap-2">
           <button
             type="button"
             class="nb-btn px-2.5 py-1 text-[11px] font-black rounded"
@@ -141,7 +141,7 @@ import { IconComponent } from '../../../shared/components';
 
       <!-- Neobrutalist Movements Table -->
       <div class="overflow-x-auto nb-card rounded-lg">
-        <table class="w-full text-left border-collapse">
+        <table class="dt-records w-full text-left border-collapse">
           <thead>
             <tr class="bg-black text-white border-b-[2.5px] border-black text-xs font-black uppercase tracking-wider">
               <th class="p-3">Tipo</th>
@@ -150,11 +150,11 @@ import { IconComponent } from '../../../shared/components';
               <th class="p-3 text-right">Variación</th>
             </tr>
           </thead>
-          <tbody class="divide-y-2 divide-black/15 text-xs">
+          <tbody class="text-xs">
             @for (item of displayedItems; track item.id) {
               <tr class="hover:bg-[#FFFDF0] transition-colors">
                 <!-- Type badge -->
-                <td class="p-3">
+                <td data-label="Tipo" class="p-3">
                   <span
                     class="nb-badge font-black text-xs gap-1"
                     [class.bg-[#4ADE80]]="item.quantity_delta > 0"
@@ -168,7 +168,7 @@ import { IconComponent } from '../../../shared/components';
                 </td>
 
                 <!-- Part and reason -->
-                <td class="p-3">
+                <td data-label="Repuesto y motivo" class="p-3">
                   <a [routerLink]="['/parts', item.part_id]" class="block group text-black no-underline">
                     <strong class="font-black text-xs block group-hover:underline">{{ item.part_name }}</strong>
                     <span class="text-[11px] font-bold text-black/70">{{ item.reason }}</span>
@@ -181,13 +181,13 @@ import { IconComponent } from '../../../shared/components';
                 </td>
 
                 <!-- Date & user -->
-                <td class="p-3 text-xs">
+                <td data-label="Fecha y operador" class="p-3 text-xs">
                   <span class="font-black block">{{ localDate(item.created_at) }}</span>
                   <span class="text-[11px] font-bold text-black/60">{{ item.user_name }}</span>
                 </td>
 
                 <!-- Variation delta -->
-                <td class="p-3 text-right">
+                <td data-label="Variación" class="p-3 text-right">
                   <span
                     class="nb-badge font-mono text-xs font-black"
                     [class.bg-[#4ADE80]]="item.quantity_delta > 0"

@@ -3,7 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 import { API_BASE_URL } from '../config';
-import { Device, Movement, PageResult, Part, User } from '../models';
+import { Device, Movement, PageResult, Part, PartNameMatch, User } from '../models';
 import { AuthService } from './auth.service';
 
 export interface Dashboard {
@@ -32,6 +32,12 @@ export class ApiService {
 
   part(id: number): Promise<Part> {
     return firstValueFrom(this.http.get<Part>(`${this.baseUrl}/parts/${id}`));
+  }
+
+  partNameMatches(name: string, page = 1, excludeId?: number): Promise<PageResult<PartNameMatch>> {
+    const params: Record<string, string> = { name, page: String(page), limit: '5' };
+    if (excludeId) params['exclude_id'] = String(excludeId);
+    return firstValueFrom(this.http.get<PageResult<PartNameMatch>>(`${this.baseUrl}/parts/name-matches`, { params }));
   }
 
   createPart(data: Record<string, unknown>): Promise<Part> {

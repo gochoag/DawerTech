@@ -1,19 +1,21 @@
 import { Component, HostListener, inject, OnDestroy } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
 import { AuthService, ModalLockService, ThemeService, ToastService } from '../../core/services';
+import { AppActionsService } from '../../core/services/app-actions.service';
 import { IconComponent } from './icon.component';
+import { DialogSurfaceDirective } from './dialog-surface.directive';
 
 @Component({
   selector: 'dt-shell',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, RouterOutlet, IconComponent],
+  imports: [DialogSurfaceDirective, RouterLink, RouterLinkActive, RouterOutlet, IconComponent],
   template: `
-    <div class="min-h-screen flex flex-col bg-[#F8F6EE] text-black">
+    <div class="dt-shell flex flex-col bg-[#F8F6EE] text-black">
       <!-- Top Navbar: Neobrutalist Banner -->
-      <header class="bg-white border-b-[3px] border-black px-4 sm:px-6 sticky top-0 z-30 h-16 flex items-center justify-between">
+      <header class="dt-topbar bg-white border-b-[3px] border-black px-4 sm:px-6 sticky top-0 z-30 h-16 flex items-center justify-between">
         <!-- Left Section: Mobile Hamburger (only on screens < lg) + Brand Logo -->
-        <div class="flex items-center gap-2.5 sm:gap-3">
+        <div class="dt-brand-group flex items-center gap-2.5 sm:gap-3">
           <!-- Mobile Hamburger Toggle (Left side where drawer opens, hidden on desktop/laptop >= lg) -->
           <button
             type="button"
@@ -30,13 +32,13 @@ import { IconComponent } from './icon.component';
             <div class="w-9 h-9 bg-[#FFE600] border-2 border-black rounded-md flex items-center justify-center nb-shadow-sm shrink-0">
               <img src="assets/dt-mark.svg" alt="DawerTech" class="w-6 h-6" />
             </div>
-            <span class="text-xl font-black tracking-tight leading-none text-[#2a2f63]">DawerTech</span>
+            <span class="dt-brand-name text-xl font-black tracking-tight leading-none text-[#2a2f63]">DawerTech</span>
           </a>
         </div>
 
         <!-- Right Quick Actions: Nuevo repuesto, Theme, Profile -->
-        <div class="flex items-center gap-2 sm:gap-3">
-          <a routerLink="/parts/new" class="nb-btn bg-[#FFE600] hover:bg-[#FFD700] text-black px-3 py-1.5 rounded-md text-xs sm:text-sm font-black gap-1.5">
+        <div class="dt-topbar-actions flex items-center gap-2 sm:gap-3">
+          <a routerLink="/parts/new" aria-label="Nuevo repuesto" class="dt-desktop-action nb-btn bg-[#FFE600] hover:bg-[#FFD700] text-black px-3 py-1.5 rounded-md text-xs sm:text-sm font-black gap-1.5">
             <dt-icon name="plus" sizeClass="w-4 h-4" />
             <span class="hidden sm:inline">Nuevo repuesto</span>
           </a>
@@ -44,7 +46,7 @@ import { IconComponent } from './icon.component';
           <!-- Theme Toggle Button (Neobrutalism) -->
           <button
             type="button"
-            class="nb-btn bg-white hover:bg-neutral-100 dark:bg-[#1E2028] dark:hover:bg-[#282B36] p-1.5 sm:px-2.5 sm:py-1.5 rounded-md text-xs font-black gap-1.5 cursor-pointer text-black"
+            class="dt-desktop-action nb-btn bg-white hover:bg-neutral-100 dark:bg-[#1E2028] dark:hover:bg-[#282B36] p-1.5 sm:px-2.5 sm:py-1.5 rounded-md text-xs font-black gap-1.5 cursor-pointer text-black"
             (click)="theme.toggle()"
             [title]="theme.isDark() ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
             aria-label="Alternar modo oscuro o claro"
@@ -65,6 +67,7 @@ import { IconComponent } from './icon.component';
               class="nb-btn bg-white hover:bg-neutral-100 px-2 py-1 rounded-md text-xs font-bold gap-2"
               (click)="userMenuOpen = !userMenuOpen"
               aria-label="Menú de usuario"
+              [attr.aria-expanded]="userMenuOpen"
             >
               <div class="w-6 h-6 bg-black text-[#FFE600] font-black rounded flex items-center justify-center text-[11px]">
                 {{ initials }}
@@ -77,7 +80,7 @@ import { IconComponent } from './icon.component';
               <!-- Dropdown backdrop -->
               <div class="fixed inset-0 z-40" (click)="userMenuOpen = false"></div>
               <!-- Dropdown box -->
-              <div class="absolute right-0 mt-2 w-60 bg-white border-[2.5px] border-black nb-shadow-lg rounded-md p-2 z-50 animate-in fade-in zoom-in-95">
+              <div class="dt-user-menu absolute right-0 mt-2 w-60 bg-white border-[2.5px] border-black nb-shadow-lg rounded-md p-2 z-50 animate-in fade-in zoom-in-95">
                 <div class="p-2 border-b-2 border-black/15 mb-2 bg-[#F8F6EE] rounded">
                   <span class="font-black text-xs block text-black truncate">{{ auth.user()?.name }}</span>
                   <span class="text-[11px] font-semibold text-black/60 block truncate">{{ auth.user()?.email }}</span>
@@ -137,25 +140,26 @@ import { IconComponent } from './icon.component';
       </header>
 
       <!-- Layout Body -->
-      <div class="flex-1 flex min-h-[calc(100vh-4rem)] relative">
+      <div class="dt-workspace flex-1 flex min-h-0 relative">
         <!-- Desktop Sidebar (with attached toggle on right edge) -->
         <aside
-          class="hidden lg:flex flex-col bg-white border-r-[3px] border-black shrink-0 sticky top-16 h-[calc(100vh-4rem)] transition-all duration-150 z-20 justify-between p-3 relative"
+          class="dt-sidebar hidden lg:flex flex-col bg-white border-r-[3px] border-black shrink-0 h-full transition-all duration-150 z-20 justify-between p-3 relative"
           [class.w-64]="desktopOpen"
           [class.w-20]="!desktopOpen"
         >
           <!-- Attached collapse button on sidebar border -->
           <button
             type="button"
-            class="absolute -right-3.5 top-5 z-30 w-7 h-7 bg-white hover:bg-[#FFE600] border-2 border-black rounded-full flex items-center justify-center cursor-pointer nb-shadow-sm text-black transition-colors"
+            class="dt-sidebar-toggle bg-white hover:bg-[#FFE600] border-2 border-black rounded-full flex items-center justify-center cursor-pointer nb-shadow-sm text-black transition-colors"
             (click)="desktopOpen = !desktopOpen"
             [title]="desktopOpen ? 'Contraer barra lateral' : 'Expandir barra lateral'"
             aria-label="Alternar barra lateral"
+            [attr.aria-expanded]="desktopOpen"
           >
             <dt-icon [name]="desktopOpen ? 'chevron-left' : 'chevron-right'" sizeClass="w-3.5 h-3.5" />
           </button>
 
-          <div class="overflow-y-auto space-y-1">
+          <div class="dt-sidebar-navigation space-y-1">
             @if (desktopOpen) {
               <div class="px-2 py-1 text-[10px] font-black uppercase tracking-wider text-black/50">Navegación</div>
             }
@@ -285,7 +289,7 @@ import { IconComponent } from './icon.component';
             (touchmove)="$event.stopPropagation(); $event.preventDefault()"
             aria-hidden="true"
           ></div>
-          <div class="fixed inset-y-0 left-0 w-72 bg-white border-r-[3.5px] border-black nb-shadow-xl z-50 lg:hidden p-4 flex flex-col justify-between animate-in slide-in-from-left">
+          <div dtDialogSurface (dtDismiss)="closeMobileMenu()" class="dt-drawer fixed inset-y-0 left-0 w-72 bg-white border-r-[3.5px] border-black nb-shadow-xl z-50 lg:hidden p-4 flex flex-col justify-between animate-in slide-in-from-left">
             <div>
               <div class="flex items-center justify-between pb-3 border-b-2 border-black mb-4">
                 <div class="flex items-center gap-2.5">
@@ -353,7 +357,7 @@ import { IconComponent } from './icon.component';
         }
 
         <!-- Main Viewport: Clean padding, no overlapping bottom bar -->
-        <main class="flex-1 flex flex-col min-w-0 pb-6 sm:pb-8 lg:pb-8 overflow-y-auto">
+        <main id="main-content" class="flex-1 flex flex-col min-w-0 min-h-0 pb-6 sm:pb-8 lg:pb-8 overflow-y-auto">
           <div class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
             <router-outlet />
           </div>
@@ -361,7 +365,7 @@ import { IconComponent } from './icon.component';
       </div>
 
       <!-- Floating Neobrutalist Toasts: Bottom-Right and always on top of modals -->
-      <div class="fixed bottom-6 right-6 z-[9999] flex flex-col gap-2 max-w-sm pointer-events-none">
+      <div class="dt-toasts fixed bottom-6 right-6 z-[9999] flex flex-col gap-2 max-w-sm pointer-events-none">
         @for (toast of toastService.toasts(); track toast.id) {
           <div
             class="pointer-events-auto border-[2.5px] border-black nb-shadow p-3.5 rounded-lg flex items-center justify-between gap-3 text-xs font-black animate-in slide-in-from-right fade-in"
@@ -393,38 +397,6 @@ import { IconComponent } from './icon.component';
         }
       </div>
 
-      <!-- Logout Confirmation Modal (Neobrutalism) -->
-      @if (showLogoutConfirm) {
-        <div
-          class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-in fade-in"
-          (click)="cancelLogout()"
-          (wheel)="$event.stopPropagation(); $event.preventDefault()"
-          (touchmove)="$event.stopPropagation(); $event.preventDefault()"
-        >
-          <div class="bg-white border-[3.5px] border-black nb-shadow-xl p-6 rounded-lg max-w-sm w-full relative" (click)="$event.stopPropagation()">
-            <div class="flex items-center gap-3 pb-3 border-b-2 border-black mb-3">
-              <div class="w-10 h-10 bg-[#FF5A5F] text-white border-2 border-black rounded-lg flex items-center justify-center nb-shadow-sm shrink-0">
-                <dt-icon name="logout" sizeClass="w-5 h-5" />
-              </div>
-              <div>
-                <h3 class="font-black text-base text-black leading-tight">¿Cerrar sesión?</h3>
-                <span class="text-xs font-bold text-black/60">Taller DawerTech</span>
-              </div>
-            </div>
-            <p class="text-xs font-bold text-black/70 mb-4">
-              Se cerrará la sesión actual en este dispositivo. Tendrás que ingresar tus credenciales para volver a entrar.
-            </p>
-            <div class="flex justify-end gap-2">
-              <button type="button" class="nb-btn bg-white hover:bg-neutral-100 px-3.5 py-1.5 text-xs font-black rounded" (click)="cancelLogout()">
-                Cancelar
-              </button>
-              <button type="button" class="nb-btn bg-[#FF5A5F] hover:bg-[#e04348] text-white px-3.5 py-1.5 text-xs font-black rounded" (click)="confirmLogout()">
-                Sí, cerrar sesión
-              </button>
-            </div>
-          </div>
-        </div>
-      }
     </div>
   `,
 })
@@ -433,12 +405,11 @@ export class ShellComponent implements OnDestroy {
   readonly theme = inject(ThemeService);
   readonly toastService = inject(ToastService);
   readonly modalLock = inject(ModalLockService);
-  private readonly router = inject(Router);
+  private readonly actions = inject(AppActionsService);
 
   desktopOpen = true;
   mobileOpen = false;
   userMenuOpen = false;
-  showLogoutConfirm = false;
 
   get initials(): string {
     return (this.auth.user()?.name ?? 'DT')
@@ -454,7 +425,7 @@ export class ShellComponent implements OnDestroy {
   }
 
   private syncBodyScroll(): void {
-    if (this.mobileOpen || this.showLogoutConfirm) {
+    if (this.mobileOpen) {
       this.modalLock.lock();
     } else {
       this.modalLock.unlock();
@@ -463,10 +434,6 @@ export class ShellComponent implements OnDestroy {
 
   @HostListener('document:keydown.escape')
   handleEscape(): void {
-    if (this.showLogoutConfirm) {
-      this.cancelLogout();
-      return;
-    }
     if (this.userMenuOpen) {
       this.userMenuOpen = false;
       return;
@@ -490,19 +457,7 @@ export class ShellComponent implements OnDestroy {
   requestLogout(): void {
     this.userMenuOpen = false;
     this.mobileOpen = false;
-    this.showLogoutConfirm = true;
     this.syncBodyScroll();
-  }
-
-  cancelLogout(): void {
-    this.showLogoutConfirm = false;
-    this.syncBodyScroll();
-  }
-
-  async confirmLogout(): Promise<void> {
-    this.showLogoutConfirm = false;
-    this.syncBodyScroll();
-    await this.auth.logout();
-    await this.router.navigateByUrl('/login');
+    this.actions.requestLogout();
   }
 }

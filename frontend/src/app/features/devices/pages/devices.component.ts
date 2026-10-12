@@ -3,11 +3,11 @@ import { FormsModule } from '@angular/forms';
 
 import { ApiService, ModalLockService, ToastService } from '../../../core/services';
 import { Device } from '../../../core/models';
-import { IconComponent, ImagePickerComponent } from '../../../shared/components';
+import { DialogSurfaceDirective, IconComponent, ImagePickerComponent } from '../../../shared/components';
 
 @Component({
   standalone: true,
-  imports: [FormsModule, IconComponent, ImagePickerComponent],
+  imports: [DialogSurfaceDirective, FormsModule, IconComponent, ImagePickerComponent],
   template: `
     <!-- Header -->
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
@@ -127,12 +127,12 @@ import { IconComponent, ImagePickerComponent } from '../../../shared/components'
     <!-- Modal for New Device (Neobrutalism with Scroll Lock) -->
     @if (showCreateModal) {
       <div
-        class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-in fade-in"
+        class="dt-modal-overlay fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-in fade-in"
         (click)="closeCreateModal()"
         (wheel)="$event.stopPropagation(); $event.preventDefault()"
         (touchmove)="$event.stopPropagation(); $event.preventDefault()"
       >
-        <div class="bg-white border-[3.5px] border-black nb-shadow-xl p-6 rounded-lg max-w-md w-full relative" (click)="$event.stopPropagation()">
+        <div dtDialogSurface (dtDismiss)="closeCreateModal()" class="bg-white border-[3.5px] border-black nb-shadow-xl p-6 rounded-lg max-w-md w-full relative" (click)="$event.stopPropagation()">
           <div class="flex justify-between items-start pb-3 border-b-2 border-black mb-4">
             <div>
               <div class="inline-block nb-badge bg-[#4ADE80] uppercase text-[9px] font-black mb-1">
@@ -150,8 +150,8 @@ import { IconComponent, ImagePickerComponent } from '../../../shared/components'
 
           <form (ngSubmit)="create()" class="space-y-4">
             <div>
-              <label class="block text-xs font-black uppercase text-black mb-1">Marca fabricante</label>
-              <input
+              <label class="block text-xs font-black uppercase text-black mb-1" for="devices-brand">Marca fabricante</label>
+              <input id="devices-brand" aria-label="Marca fabricante"
                 [(ngModel)]="brand"
                 name="brand"
                 required
@@ -162,8 +162,8 @@ import { IconComponent, ImagePickerComponent } from '../../../shared/components'
             </div>
 
             <div>
-              <label class="block text-xs font-black uppercase text-black mb-1">Nombre comercial del modelo</label>
-              <input
+              <label class="block text-xs font-black uppercase text-black mb-1" for="devices-name">Nombre comercial del modelo</label>
+              <input id="devices-name" aria-label="Nombre comercial"
                 [(ngModel)]="name"
                 name="name"
                 required
@@ -174,8 +174,8 @@ import { IconComponent, ImagePickerComponent } from '../../../shared/components'
             </div>
 
             <div>
-              <label class="block text-xs font-black uppercase text-black mb-1">Código técnico (opcional)</label>
-              <input
+              <label class="block text-xs font-black uppercase text-black mb-1" for="devices-code">Código técnico (opcional)</label>
+              <input id="devices-code" aria-label="Código técnico"
                 [(ngModel)]="code"
                 name="code"
                 maxlength="80"

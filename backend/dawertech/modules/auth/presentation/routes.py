@@ -6,6 +6,7 @@ from sqlalchemy import func, select
 
 from dawertech.modules.auth.infrastructure.orm_models import LoginAttemptORM, RefreshSessionORM, UserORM, utc_now
 from dawertech.modules.auth.infrastructure.security import (
+    DEVICE_SESSION_EXPIRY,
     SESSION_ROTATION_GRACE_SECONDS,
     as_utc,
     check_password,
@@ -38,6 +39,9 @@ def login():
     data = payload()
     email = required_text(data, "email", 254).lower()
     password = required_text(data, "password", 128)
+    remember_device = data.get("remember_device", False)
+    if not isinstance(remember_device, bool):
+        raise ApiProblem("invalid_field", "La opción de recordar el dispositivo debe ser booleana")
     attempt_key = hashlib.sha256(f"{email}|{request.remote_addr}".encode()).hexdigest()
     with write_session() as session:
         attempt = session.get(LoginAttemptORM, attempt_key)
@@ -61,7 +65,7 @@ def login():
         else:
             if attempt:
                 session.delete(attempt)
-            response = {"user": user_data(user), **issue_tokens(session, user)}
+            response = {"user": user_data(user), **issue_tokens(session, user, remember_device)}
             status = 200
     return response, status
 
@@ -70,6 +74,9 @@ def login():
 def refresh():
     data = payload()
     refresh_token = required_text(data, "refresh_token", 256)
+    remember_device = data.get("remember_device", False)
+    if not isinstance(remember_device, bool):
+        raise ApiProblem("invalid_field", "La opción de recordar el dispositivo debe ser booleana")
     with write_session() as session:
         old_session = session.scalar(select(RefreshSessionORM).where(RefreshSessionORM.token_hash == token_hash(refresh_token)))
         now = utc_now()
@@ -81,13 +88,26 @@ def refresh():
         if not user or not user.active:
             raise ApiProblem("unauthorized", "Cuenta inactiva", 401)
         old_session.revoked_at = now
-        result = {"user": user_data(user), **issue_tokens(session, user)}
+        remember_device = remember_device or as_utc(old_session.expires_at) == DEVICE_SESSION_EXPIRY
+        result = {"user": user_data(user), **issue_tokens(session, user, remember_device)}
     return result
 
 
 @auth_bp.post("/auth/logout")
-@require_auth()
 def logout():
+    data = payload()
+    if "refresh_token" in data:
+        refresh_token = required_text(data, "refresh_token", 256)
+        with write_session() as session:
+            current_session = session.scalar(select(RefreshSessionORM).where(RefreshSessionORM.token_hash == token_hash(refresh_token)))
+            if current_session:
+                current_session.revoked_at = utc_now() - timedelta(minutes=10)
+        return "", 204
+    return logout_access_token()
+
+
+@require_auth()
+def logout_access_token():
     with write_session() as session:
         current_session = session.get(RefreshSessionORM, g.current_session_id)
         if current_session:

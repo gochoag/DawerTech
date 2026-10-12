@@ -18,7 +18,8 @@ export const errorInterceptor: HttpInterceptorFn = (request, next) => {
         error.status === 401 &&
         !isAlreadyRetried &&
         !request.url.includes('/auth/login') &&
-        !request.url.includes('/auth/refresh')
+        !request.url.includes('/auth/refresh') &&
+        !request.url.includes('/auth/logout')
       ) {
         if (auth.hasRefreshToken()) {
           return from(auth.refresh()).pipe(
@@ -30,9 +31,6 @@ export const errorInterceptor: HttpInterceptorFn = (request, next) => {
               return next(retried);
             }),
             catchError((refreshErr) => {
-              if (refreshErr instanceof HttpErrorResponse && (refreshErr.status === 401 || refreshErr.status === 403)) {
-                auth.clearSession();
-              }
               return throwError(() => refreshErr);
             }),
           );

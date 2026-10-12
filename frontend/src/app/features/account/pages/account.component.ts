@@ -9,7 +9,7 @@ import { IconComponent } from '../../../shared/components';
   standalone: true,
   imports: [FormsModule, IconComponent],
   template: `
-    <div class="max-w-xl mx-auto space-y-6">
+    <div class="dt-account-page max-w-xl mx-auto space-y-6">
       <!-- Header -->
       <div>
         <div class="inline-block nb-badge bg-[#FFE600] uppercase text-[10px] tracking-wider mb-1">
@@ -23,7 +23,22 @@ import { IconComponent } from '../../../shared/components';
         </p>
       </div>
 
-      <div class="nb-card p-5 sm:p-7 rounded-lg">
+      @if (auth.isNative) {
+        <section class="nb-card p-5 sm:p-7 rounded-lg" aria-labelledby="device-lock-heading">
+          <h2 id="device-lock-heading" class="text-base font-black text-black mb-3">Acceso en este celular</h2>
+          <p class="text-sm font-bold text-black mb-3">La sesión queda guardada al cerrar la app. Si activas esta protección, solo se pedirá tu huella, rostro o PIN después de 7 días sin usarla.</p>
+          <p class="text-sm font-bold text-black mb-4">Se usa el PIN de bloqueo de Android y la biometría que tengas configurada en el dispositivo.</p>
+          <label class="flex items-center gap-3 min-h-12 text-sm font-bold text-black cursor-pointer">
+            <input type="checkbox" class="w-6 h-6 accent-black dark:accent-[#FFE600]" [checked]="auth.deviceLockEnabled()"
+              [disabled]="configuringLock" (change)="toggleDeviceLock($event)" />
+            Proteger el acceso después de varios días
+          </label>
+          @if (configuringLock) { <p aria-live="polite" class="text-sm font-bold mt-3">Configurando protección…</p> }
+          @if (lockMessage) { <p role="status" class="text-sm font-bold text-black mt-3">{{ lockMessage }}</p> }
+        </section>
+      }
+
+      <div class="dt-form-panel nb-card p-5 sm:p-7 rounded-lg">
         <div class="pb-3 border-b-2 border-black mb-4">
           <h2 class="text-sm font-black uppercase text-black flex items-center gap-2">
             <dt-icon name="settings" sizeClass="w-4 h-4 text-black" />
@@ -37,9 +52,9 @@ import { IconComponent } from '../../../shared/components';
         <form (ngSubmit)="save()" class="space-y-4">
           <!-- Current Password -->
           <div>
-            <label class="block text-xs font-black uppercase text-black mb-1">Contraseña actual</label>
+            <label for="account-old" class="block text-xs font-black uppercase text-black mb-1">Contraseña actual</label>
             <div class="relative">
-              <input
+              <input id="account-old" aria-label="Contraseña actual"
                 name="old"
                 [type]="showOld ? 'text' : 'password'"
                 autocomplete="current-password"
@@ -60,9 +75,9 @@ import { IconComponent } from '../../../shared/components';
 
           <!-- New Password -->
           <div>
-            <label class="block text-xs font-black uppercase text-black mb-1">Nueva contraseña</label>
+            <label class="block text-xs font-black uppercase text-black mb-1" for="account-new">Nueva contraseña</label>
             <div class="relative">
-              <input
+              <input id="account-new" aria-label="Nueva contraseña"
                 name="new"
                 [type]="showNew ? 'text' : 'password'"
                 autocomplete="new-password"
@@ -99,9 +114,9 @@ import { IconComponent } from '../../../shared/components';
 
           <!-- Confirm New Password -->
           <div>
-            <label class="block text-xs font-black uppercase text-black mb-1">Confirmar nueva contraseña</label>
+            <label class="block text-xs font-black uppercase text-black mb-1" for="account-confirm">Confirmar nueva contraseña</label>
             <div class="relative">
-              <input
+              <input id="account-confirm" aria-label="Confirmar nueva contraseña"
                 name="confirm"
                 [type]="showConfirm ? 'text' : 'password'"
                 autocomplete="new-password"
@@ -167,6 +182,26 @@ export class AccountComponent {
   showConfirm = false;
   error = '';
   saving = false;
+  configuringLock = false;
+  lockMessage = '';
+
+  async toggleDeviceLock(event: Event): Promise<void> {
+    const checkbox = event.target as HTMLInputElement;
+    const enabled = checkbox.checked;
+    checkbox.checked = this.auth.deviceLockEnabled();
+    this.configuringLock = true;
+    this.lockMessage = '';
+    try {
+      await this.auth.setDeviceLock(enabled);
+      this.lockMessage = enabled ? 'Protección activada para 7 días de inactividad.' : 'Protección desactivada. La sesión seguirá guardada.';
+    } catch (error) {
+      this.lockMessage = error instanceof Error ? error.message : 'No se pudo configurar la protección. Inténtalo de nuevo.';
+    } finally {
+      checkbox.checked = this.auth.deviceLockEnabled();
+      this.configuringLock = false;
+      this.cdr.markForCheck();
+    }
+  }
 
   async save(): Promise<void> {
     this.error = '';

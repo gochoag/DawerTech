@@ -4,19 +4,20 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
 import { AuthService, ThemeService } from '../../../core/services';
+import { AppActionsService } from '../../../core/services/app-actions.service';
 import { IconComponent } from '../../../shared/components';
 
 @Component({
   standalone: true,
   imports: [FormsModule, IconComponent],
   template: `
-    <div class="min-h-screen bg-[#F8F6EE] flex items-center justify-center p-4 relative">
+    <div class="login-page bg-[#F8F6EE] flex justify-center p-4 relative" [class.native]="auth.isNative">
       <!-- Top Right Theme Toggle -->
       <div class="absolute top-4 right-4 z-20">
         <button
           type="button"
           (click)="theme.toggle()"
-          class="nb-btn bg-white hover:bg-neutral-100 dark:bg-[#1E2028] dark:hover:bg-[#282B36] px-2.5 py-1.5 rounded-md text-xs font-black gap-1.5 cursor-pointer text-black"
+          class="nb-btn bg-white hover:bg-neutral-100 dark:bg-[#1E2028] dark:hover:bg-[#282B36] px-3 min-h-12 rounded-md text-xs font-black gap-1.5 cursor-pointer text-black"
           [title]="theme.isDark() ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
           aria-label="Alternar modo oscuro o claro"
         >
@@ -29,65 +30,68 @@ import { IconComponent } from '../../../shared/components';
           }
         </button>
       </div>
-      <div class="max-w-5xl w-full flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-16 py-8">
+      <div class="login-content max-w-5xl w-full flex flex-col lg:flex-row items-center justify-between gap-5 lg:gap-16">
         <!-- Hero Information Text -->
         <div class="text-center lg:text-left max-w-lg">
-          <div class="flex items-center justify-center lg:justify-start gap-3 mb-4">
+          <div class="flex items-center justify-center lg:justify-start gap-3">
             <div class="w-12 h-12 bg-[#FFE600] border-[2.5px] border-black rounded-lg flex items-center justify-center nb-shadow shrink-0">
               <img src="assets/dt-mark.svg" alt="DawerTech" class="w-8 h-8" />
             </div>
             <span class="text-3xl font-black tracking-tight text-black">DawerTech</span>
           </div>
 
-          <div class="inline-block nb-badge bg-[#38BDF8] uppercase text-[10px] tracking-wider mb-3">
+          <div class="nb-badge bg-[#38BDF8] uppercase text-[10px] tracking-wider mt-4">
             Gestión de Repuestos y Taller
           </div>
 
-          <h1 class="text-4xl lg:text-5xl font-black text-black tracking-tight leading-tight">
+          @if (!auth.isNative) {
+          <h1 class="hidden lg:block text-4xl lg:text-5xl font-black text-black tracking-tight leading-tight">
             La pieza correcta, cuando la necesitas.
           </h1>
 
-          <p class="py-4 text-sm font-bold text-black/70 leading-relaxed">
-            Existencias al instante, compatibilidad universal o por modelo de celular, y trazabilidad de kardex sin retrasos de mostrador.
-          </p>
+          }
         </div>
 
         <!-- Login Card -->
-        <div class="nb-card w-full max-w-md p-6 sm:p-8 rounded-xl">
+        <div class="nb-card w-full max-w-md p-5 sm:p-8 rounded-xl">
           <div class="mb-5 pb-3 border-b-2 border-black">
-            <h2 class="text-xl font-black text-black uppercase">Iniciar Sesión</h2>
-            <p class="text-xs font-bold text-black/60 mt-0.5">Ingresa con tus credenciales de taller autorizadas.</p>
+            <h2 class="text-xl font-black text-black uppercase">{{ auth.locked() ? 'Desbloquear sesión' : 'Iniciar sesión' }}</h2>
+            <p class="text-sm font-bold text-black/70 mt-1">{{ auth.locked() ? 'Tu sesión sigue guardada.' : 'Ingresa con tu cuenta del taller.' }}</p>
           </div>
 
+          @if (!auth.locked()) {
           <form (ngSubmit)="submit()" class="space-y-4">
             <div>
-              <label class="block text-xs font-black uppercase text-black mb-1">Correo electrónico</label>
+              <label for="login-email" class="block text-xs font-black uppercase text-black mb-1">Correo electrónico</label>
               <input
                 type="email"
                 name="email"
+                id="login-email"
+                inputmode="email"
                 [(ngModel)]="email"
                 autocomplete="username"
                 required
                 placeholder="tecnico@taller.com"
-                class="nb-input w-full p-2.5 text-xs sm:text-sm rounded-md"
+                class="nb-input w-full min-h-12 p-2.5 text-base rounded-md"
               />
             </div>
 
             <div>
-              <label class="block text-xs font-black uppercase text-black mb-1">Contraseña</label>
+              <label for="login-password" class="block text-xs font-black uppercase text-black mb-1">Contraseña</label>
               <div class="relative">
                 <input
                   [type]="showPassword ? 'text' : 'password'"
                   name="password"
+                  id="login-password"
                   [(ngModel)]="password"
                   autocomplete="current-password"
                   required
                   placeholder="••••••••••••"
-                  class="nb-input w-full p-2.5 pr-10 text-xs sm:text-sm font-mono rounded-md"
+                  class="nb-input w-full min-h-12 p-2.5 pr-12 text-base rounded-md"
                 />
                 <button
                   type="button"
-                  class="absolute inset-y-0 right-0 pr-3 flex items-center text-black/60 hover:text-black transition-colors"
+                  class="absolute inset-y-0 right-0 min-w-12 flex items-center justify-center text-black/70 hover:text-black transition-colors"
                   (click)="showPassword = !showPassword"
                   [title]="showPassword ? 'Ocultar contraseña' : 'Ver contraseña'"
                   [attr.aria-label]="showPassword ? 'Ocultar contraseña' : 'Ver contraseña'"
@@ -97,61 +101,63 @@ import { IconComponent } from '../../../shared/components';
               </div>
             </div>
 
-            @if (auth.isNative) {
-              <label class="flex items-center gap-2.5 cursor-pointer py-1">
-                <input type="checkbox" name="biometrics" [(ngModel)]="enableBiometric" class="w-4 h-4 border-2 border-black rounded accent-black" />
-                <span class="text-xs font-bold text-black">Habilitar biometría en futuros inicios</span>
-              </label>
-            }
-
             @if (error) {
-              <div class="p-3 bg-[#FF5A5F] text-white border-2 border-black rounded text-xs font-bold">
+              <div role="alert" class="p-3 bg-[#FF5A5F] text-black border-2 border-black rounded text-sm font-bold">
                 {{ error }}
               </div>
             }
 
             <button
               type="submit"
-              class="nb-btn bg-[#FFE600] hover:bg-[#FFD700] w-full py-3 rounded-md text-xs sm:text-sm font-black mt-2"
+              class="nb-btn bg-[#FFE600] hover:bg-[#FFD700] w-full min-h-12 py-3 rounded-md text-sm font-black mt-2"
               [disabled]="loading || !email || !password"
             >
               {{ loading ? 'Iniciando sesión…' : 'Entrar al inventario' }}
             </button>
           </form>
-
-          @if (auth.biometricReady()) {
-            <div class="relative my-4 text-center">
-              <div class="border-t-2 border-black/15 absolute inset-0 top-1/2"></div>
-              <span class="relative bg-white px-2 text-xs font-black text-black/50">O BIEN</span>
-            </div>
-            <button class="nb-btn bg-white hover:bg-neutral-100 w-full py-2.5 text-xs font-black rounded-md" type="button" (click)="unlock()">
-              Entrar con huella / biometría
+          } @else {
+            <p class="text-sm font-bold text-black mb-4">Han pasado 7 días sin usar la app. Confirma tu identidad con la huella, rostro o PIN configurado en Android.</p>
+            @if (error) { <p role="alert" class="text-sm font-bold text-black mb-4">{{ error }}</p> }
+            <button class="nb-btn bg-[#FFE600] hover:bg-[#FFD700] w-full min-h-12 py-3 text-sm font-black rounded-md"
+              [disabled]="loading" type="button" (click)="unlock()">
+              {{ loading ? 'Desbloqueando…' : 'Desbloquear con huella, rostro o PIN' }}
             </button>
+            <button class="nb-btn bg-white w-full min-h-12 mt-4 text-sm font-black rounded-md"
+              [disabled]="loading" type="button" (click)="actions.requestLogout()">Cerrar sesión y usar otra cuenta</button>
           }
-
-          <p class="text-[11px] font-bold text-black/50 text-center mt-6">
+          @if (!auth.locked()) {
+          <p class="text-xs font-bold text-black/70 text-center mt-4">
             ¿Olvidaste tu contraseña? Solicita al administrador restablecerla desde el panel de usuarios.
           </p>
+          }
         </div>
       </div>
     </div>
   `,
+  styles: [`
+    .login-page { min-height: 100dvh; align-items: flex-start; padding-top: calc(env(safe-area-inset-top, 0px) + 4.5rem); padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px)); }
+    .login-content { margin: auto 0; }
+    .native .login-content { margin: 0; }
+    .nb-input, .nb-btn { border-color: var(--nb-text) !important; }
+    @media (min-width: 1024px) { .login-page:not(.native) { align-items: center; } .native .login-content { flex-direction: column; max-width: 28rem; gap: 1.25rem; } }
+    button:focus-visible, summary:focus-visible { outline: 3px solid var(--nb-text); outline-offset: 4px; }
+  `],
 })
 export class LoginComponent implements OnInit {
   readonly auth = inject(AuthService);
   readonly theme = inject(ThemeService);
+  readonly actions = inject(AppActionsService);
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
 
   email = '';
   password = '';
   showPassword = false;
-  enableBiometric = false;
   error = '';
   loading = false;
 
   ngOnInit(): void {
-    if (this.auth.accessToken() || (this.auth.hasRefreshToken() && this.auth.user())) {
+    if (!this.auth.locked() && (this.auth.accessToken() || (this.auth.hasRefreshToken() && this.auth.user()))) {
       void this.router.navigateByUrl('/');
     }
     void this.auth.checkBiometricLogin().finally(() => this.cdr.markForCheck());
@@ -161,12 +167,12 @@ export class LoginComponent implements OnInit {
     this.loading = true;
     this.error = '';
     try {
-      await this.auth.login(this.email, this.password, this.enableBiometric);
+      await this.auth.login(this.email, this.password);
       await this.router.navigateByUrl(this.auth.user()?.must_change_password ? '/account' : '/');
     } catch (problem: unknown) {
       if (problem instanceof HttpErrorResponse) {
         if (problem.status === 0) {
-          this.error = 'No se puede conectar con el servidor backend en localhost:5000. Revisa que esté activo.';
+          this.error = `No se puede conectar con ${this.auth.apiUrl()}. Revisa que el backend esté activo y el celular esté en la misma red que el PC.`;
         } else if (problem.status === 429) {
           this.error = 'Demasiados intentos fallidos. Por seguridad debes esperar 15 minutos antes de volver a intentar.';
         } else if (problem.error?.error?.message) {
@@ -190,10 +196,11 @@ export class LoginComponent implements OnInit {
       await this.auth.unlockBiometric();
       await this.router.navigateByUrl(this.auth.user()?.must_change_password ? '/account' : '/');
     } catch {
-      this.error = 'No se pudo desbloquear la sesión. Puedes usar tu contraseña.';
+      this.error = 'No se completó el desbloqueo. Inténtalo de nuevo con tu huella, rostro o PIN del dispositivo.';
     } finally {
       this.loading = false;
       this.cdr.markForCheck();
     }
   }
+
 }

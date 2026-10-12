@@ -55,6 +55,10 @@ def create_app(test_config: dict | None = None) -> Flask:
     install_database(app)
 
     origins = [v.strip() for v in app.config["CORS_ORIGINS"].split(",") if v.strip()]
+    origins.extend([
+        "http://localhost", "https://localhost", "http://127.0.0.1:4200",
+        r"^http://(?:localhost|127\.0\.0\.1|10(?:\.\d{1,3}){3}|192\.168(?:\.\d{1,3}){2}|172\.(?:1[6-9]|2\d|3[01])(?:\.\d{1,3}){2}):(?:4200|8100)$",
+    ])
     CORS(app, resources={r"/api/*": {"origins": origins}})
 
     # Blueprints modulares registrados bajo /api/v1

@@ -4,11 +4,11 @@ import { RouterLink } from '@angular/router';
 
 import { ApiService, ModalLockService, ToastService } from '../../../core/services';
 import { User } from '../../../core/models';
-import { IconComponent } from '../../../shared/components';
+import { DialogSurfaceDirective, IconComponent } from '../../../shared/components';
 
 @Component({
   standalone: true,
-  imports: [FormsModule, RouterLink, IconComponent],
+  imports: [DialogSurfaceDirective, FormsModule, RouterLink, IconComponent],
   template: `
     <!-- Header -->
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
@@ -91,13 +91,13 @@ import { IconComponent } from '../../../shared/components';
                 <strong class="text-xs font-black block text-black">
                   Contraseña temporal para: {{ resetFor.name }}
                 </strong>
-                <button type="button" class="nb-btn bg-white w-6 h-6 rounded p-0 flex items-center justify-center cursor-pointer" (click)="resetFor = null">
+                <button type="button" class="nb-btn bg-white w-6 h-6 rounded p-0 flex items-center justify-center cursor-pointer" (click)="resetFor = null" aria-label="Cerrar diálogo">
                   <dt-icon name="close" sizeClass="w-3.5 h-3.5" />
                 </button>
               </div>
 
               <div class="relative">
-                <input
+                <input id="users-resetPassword" aria-label="Contraseña temporal"
                   [type]="showResetPassword ? 'text' : 'password'"
                   name="resetPassword"
                   [(ngModel)]="resetPassword"
@@ -105,7 +105,7 @@ import { IconComponent } from '../../../shared/components';
                   minlength="12"
                   autocomplete="new-password"
                   placeholder="Mínimo 12 caracteres..."
-                  class="nb-input w-full p-2 pr-20 text-xs font-mono rounded"
+                  class="nb-input w-full p-2 pr-28 text-xs font-mono rounded"
                 />
                 <div class="absolute inset-y-0 right-0 flex items-center pr-1.5 gap-1">
                   @if (resetPassword) {
@@ -191,8 +191,8 @@ import { IconComponent } from '../../../shared/components';
 
     <!-- Confirmation Modal for Toggle User Status -->
     @if (userToToggle) {
-      <div class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-in fade-in" (click)="userToToggle = null">
-        <div class="bg-white border-[3.5px] border-black nb-shadow-xl p-6 rounded-lg max-w-sm w-full relative" (click)="$event.stopPropagation()">
+      <div class="dt-modal-overlay fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-in fade-in" (click)="closeToggleModal()" (wheel)="$event.stopPropagation(); $event.preventDefault()" (touchmove)="$event.stopPropagation(); $event.preventDefault()">
+        <div dtDialogSurface (dtDismiss)="closeToggleModal()" class="bg-white border-[3.5px] border-black nb-shadow-xl p-6 rounded-lg max-w-sm w-full relative" (click)="$event.stopPropagation()">
           <div class="flex items-center gap-3 pb-3 border-b-2 border-black mb-3">
             <div class="w-10 h-10 bg-[#FF5A5F] text-white border-2 border-black rounded-lg flex items-center justify-center nb-shadow-sm shrink-0">
               <dt-icon name="alert" sizeClass="w-5 h-5" />
@@ -210,7 +210,7 @@ import { IconComponent } from '../../../shared/components';
               : 'El técnico podrá volver a acceder a la plataforma con su contraseña habitual.' }}
           </p>
           <div class="flex justify-end gap-2">
-            <button type="button" class="nb-btn bg-white px-3 py-1.5 text-xs font-black rounded" (click)="userToToggle = null">
+            <button type="button" class="nb-btn bg-white px-3 py-1.5 text-xs font-black rounded" (click)="closeToggleModal()">
               Cancelar
             </button>
             <button
@@ -231,12 +231,12 @@ import { IconComponent } from '../../../shared/components';
     <!-- Create User Modal (Neobrutalism) -->
     @if (showCreateModal) {
       <div
-        class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-in fade-in"
+        class="dt-modal-overlay fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-in fade-in"
         (click)="closeCreateModal()"
         (wheel)="$event.stopPropagation(); $event.preventDefault()"
         (touchmove)="$event.stopPropagation(); $event.preventDefault()"
       >
-        <div class="bg-white border-[3.5px] border-black nb-shadow-xl p-6 rounded-lg max-w-md w-full relative" (click)="$event.stopPropagation()">
+        <div dtDialogSurface (dtDismiss)="closeCreateModal()" class="bg-white border-[3.5px] border-black nb-shadow-xl p-6 rounded-lg max-w-md w-full relative" (click)="$event.stopPropagation()">
           <div class="flex justify-between items-start pb-3 border-b-2 border-black mb-4">
             <div>
               <div class="inline-block nb-badge bg-[#C084FC] uppercase text-[9px] font-black mb-1">
@@ -244,25 +244,25 @@ import { IconComponent } from '../../../shared/components';
               </div>
               <h3 class="font-black text-lg text-black leading-tight">Invitar Técnico al Taller</h3>
             </div>
-            <button type="button" class="nb-btn bg-white hover:bg-neutral-100 w-7 h-7 rounded p-0 flex items-center justify-center cursor-pointer" (click)="closeCreateModal()">
+            <button type="button" class="nb-btn bg-white hover:bg-neutral-100 w-7 h-7 rounded p-0 flex items-center justify-center cursor-pointer" (click)="closeCreateModal()" aria-label="Cerrar diálogo">
               <dt-icon name="close" sizeClass="w-3.5 h-3.5" />
             </button>
           </div>
 
           <form (ngSubmit)="create()" class="space-y-3.5">
             <div>
-              <label class="block text-xs font-black uppercase text-black mb-1">Nombre completo</label>
-              <input name="name" [(ngModel)]="name" required maxlength="120" placeholder="Ej. Ana Gómez" class="nb-input w-full p-2 text-xs rounded" />
+              <label class="block text-xs font-black uppercase text-black mb-1" for="users-name">Nombre completo</label>
+              <input id="users-name" aria-label="Nombre completo" name="name" [(ngModel)]="name" required maxlength="120" placeholder="Ej. Ana Gómez" class="nb-input w-full p-2 text-xs rounded" />
             </div>
 
             <div>
-              <label class="block text-xs font-black uppercase text-black mb-1">Correo electrónico</label>
-              <input name="email" type="email" [(ngModel)]="email" required maxlength="254" placeholder="ana@taller.com" class="nb-input w-full p-2 text-xs rounded" />
+              <label class="block text-xs font-black uppercase text-black mb-1" for="users-email">Correo electrónico</label>
+              <input id="users-email" aria-label="Correo electrónico" name="email" type="email" [(ngModel)]="email" required maxlength="254" placeholder="ana@taller.com" class="nb-input w-full p-2 text-xs rounded" />
             </div>
 
             <div>
-              <div class="flex items-center justify-between mb-1">
-                <label class="block text-xs font-black uppercase text-black">Contraseña temporal</label>
+              <div class="flex flex-wrap items-center justify-between gap-2 mb-1">
+                <label class="block text-xs font-black uppercase text-black" for="users-password">Contraseña temporal</label>
                 <button
                   type="button"
                   class="nb-btn bg-white hover:bg-[#FFE600] px-2 py-0.5 text-[10px] font-black rounded gap-1"
@@ -273,7 +273,7 @@ import { IconComponent } from '../../../shared/components';
                 </button>
               </div>
               <div class="relative">
-                <input
+                <input id="users-password" aria-label="Contraseña temporal"
                   name="password"
                   [type]="showCreatePassword ? 'text' : 'password'"
                   [(ngModel)]="password"
@@ -281,7 +281,7 @@ import { IconComponent } from '../../../shared/components';
                   minlength="12"
                   autocomplete="new-password"
                   placeholder="••••••••••••"
-                  class="nb-input w-full p-2 pr-20 text-xs font-mono rounded"
+                  class="nb-input w-full p-2 pr-28 text-xs font-mono rounded"
                 />
                 <div class="absolute inset-y-0 right-0 flex items-center pr-1.5 gap-1">
                   @if (password) {
@@ -414,6 +414,11 @@ export class UsersComponent implements OnInit, OnDestroy {
 
   closeCreateModal(): void {
     this.showCreateModal = false;
+    this.syncBodyScroll();
+  }
+
+  closeToggleModal(): void {
+    this.userToToggle = null;
     this.syncBodyScroll();
   }
 

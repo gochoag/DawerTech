@@ -4,15 +4,16 @@ Prefijo: `/api/v1`. Todas las peticiones y respuestas de datos usan JSON. Los en
 
 | Método | Ruta | Uso |
 | --- | --- | --- |
-| POST | `/auth/login` | Correo y contraseña; entrega JWT de 15 minutos y token de renovación |
-| POST | `/auth/refresh` | Rota el token de renovación; el anterior queda inválido |
-| POST | `/auth/logout` | Revoca la sesión actual |
+| POST | `/auth/login` | Correo y contraseña; entrega JWT de 12 horas y token de renovación. `remember_device: true` recuerda Android sin caducidad por fecha; la web renueva por 365 días |
+| POST | `/auth/refresh` | Rota el token de renovación con 5 minutos de margen para peticiones concurrentes. Conserva la sesión recordada; `remember_device: true` permite actualizar una sesión anterior de Android |
+| POST | `/auth/logout` | Revoca la sesión identificada por `refresh_token`, o por el Bearer de acceso si se envía `{}` |
 | GET | `/auth/me` | Cuenta actual |
 | POST | `/auth/password` | Cambia clave y revoca todas las sesiones |
 | GET/POST | `/users` | Listar/crear coadministradores (propietario) |
 | PATCH | `/users/:id` | Cambiar nombre, estado o clave (propietario) |
 | GET/POST | `/devices` | Buscar/listar y crear modelos de celular |
 | GET/POST | `/parts` | Buscar/listar y crear repuestos |
+| GET | `/parts/name-matches` | Aviso de nombres repetidos: `name`, `page`, `limit` y `exclude_id` opcional; incluye SKU, calidad, categoría y estado archivado |
 | GET/PATCH | `/parts/:id` | Detalle y edición; `archived` retira una referencia de la lista |
 | GET/POST | `/parts/:id/image` | Imagen opcional autenticada |
 | GET/POST | `/movements` | Historial y entrada, salida o ajuste |
@@ -21,9 +22,13 @@ Prefijo: `/api/v1`. Todas las peticiones y respuestas de datos usan JSON. Los en
 | POST | `/imports/preview` | Validación de archivo UTF-8, máximo 500 filas |
 | POST | `/imports/commit` | Confirmación atómica de filas validadas |
 
-`GET /devices?q=...` busca por marca, modelo o código; `ids=1,2` recupera seleccionados. `GET /parts?q=...&device_id=...` filtra por texto y compatibilidad. Las listas usan `page` y `limit` (máximo 100).
+`GET /devices?q=...` combina palabras entre marca, modelo y código, sin distinguir mayúsculas ni el orden: `samsung a02` y `a02 samsung` encuentran Samsung Galaxy A02. Cada palabra debe coincidir y los caracteres `%` y `_` se buscan literalmente; `ids=1,2` recupera seleccionados. `GET /parts?q=...&device_id=...` filtra por texto y compatibilidad. Las listas usan `page` y `limit` (máximo 100).
 
 ### Repuesto
+
+`GET /parts/name-matches?name=...` compara el nombre completo ignorando mayúsculas, tildes y espacios extra. Incluye otras calidades y registros archivados para que se puedan revisar antes de crear. Es un aviso: el nombre no es único y se permite crear otra referencia después de revisarlo. El SKU sigue siendo único y un SKU repetido devuelve `duplicate_sku` (409).
+
+En la tabla, **Foto** abre la imagen autenticada sin entrar a la ficha y muestra **Sin foto** cuando no existe. **Precio venta** y **Precio compra** se muestran juntos; el SKU se copia con el icono junto al nombre.
 
 ```json
 {

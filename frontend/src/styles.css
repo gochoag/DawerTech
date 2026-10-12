@@ -23,6 +23,11 @@
   --nb-green: #4ADE80;
   --nb-red: #FF5A5F;
   --nb-purple: #C084FC;
+  --nb-on-surface: #000000;
+  --nb-on-muted: #444444;
+  --nb-on-subtle: #555555;
+  --nb-on-error: #B91C1C;
+  --nb-select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m4 6 4 4 4-4' fill='none' stroke='%23000000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 }
 
 .dark {
@@ -33,13 +38,18 @@
   --nb-input: #21242C;
   --nb-text: #F9FAFB;
   --nb-text-muted: #9CA3AF;
-  --nb-border: #383D4A;
+  --nb-border: #8F97A8;
   --nb-shadow: #000000;
   --nb-yellow: #FFE600;
   --nb-cyan: #38BDF8;
   --nb-green: #4ADE80;
   --nb-red: #FF5A5F;
   --nb-purple: #C084FC;
+  --nb-on-surface: #F9FAFB;
+  --nb-on-muted: #D1D5DB;
+  --nb-on-subtle: #9CA3AF;
+  --nb-on-error: #FDA4AF;
+  --nb-select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m4 6 4 4 4-4' fill='none' stroke='%23F9FAFB' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   color-scheme: dark;
 }
 
@@ -58,6 +68,226 @@ ion-app {
   overflow-y: auto;
   overflow-x: hidden;
   background-color: var(--nb-bg);
+}
+
+/* Shared sizing keeps pages, overlays and touch controls consistent across devices. */
+:root {
+  --dt-control-size: 2.75rem;
+  --dt-page-padding: clamp(1rem, 3vw, 2rem);
+}
+
+.dt-shell { height: 100dvh; min-height: 0; }
+.dt-topbar { flex-shrink: 0; gap: 1rem; }
+.dt-brand-group, .dt-topbar-actions { min-width: 0; }
+.dt-topbar-actions { flex-shrink: 0; }
+.dt-topbar a { min-height: var(--dt-control-size); }
+main :where(button, a:not(p a):not(.dt-records td a)) { min-height: var(--dt-control-size); }
+main button, aside :where(button, a) { min-width: var(--dt-control-size); min-height: var(--dt-control-size); }
+.dt-records td a { min-height: var(--dt-control-size); }
+main :where(.category-combobox-wrapper, .variant-combobox-wrapper) > div:first-child { gap: .5rem; flex-wrap: wrap; }
+.dt-combobox-toggle { width: var(--dt-control-size); height: var(--dt-control-size); }
+main :where(.category-combobox-wrapper, .variant-combobox-wrapper) input { padding-right: 3rem; }
+.text-black\/50, .text-black\/40 { color: var(--nb-text-muted); }
+main > div { padding: var(--dt-page-padding); }
+main :where(.grid > *, .flex-1, form, .nb-card, h1, p) { min-width: 0; }
+main :where(h1, p, strong, code) { overflow-wrap: anywhere; }
+main h1 { font-size: clamp(1.75rem, 4vw, 2.25rem); line-height: 1.15; }
+.nb-btn, button.nb-badge, .dt-user-menu :where(a, button), .dt-drawer a {
+  min-height: var(--dt-control-size);
+  min-width: var(--dt-control-size);
+}
+.nb-btn { white-space: normal; }
+.nb-input:not([type="checkbox"]):not([type="radio"]) {
+  min-height: var(--dt-control-size);
+  font-size: 1rem;
+  border-color: var(--nb-text);
+}
+textarea.nb-input { min-height: 6rem; resize: vertical; }
+.dt-native :is(.dt-clipboard-shortcut, .dt-desktop-paste-hint) { display: none; }
+
+/* Desktop forms are denser; native Android and touch devices keep their targets. */
+@media (min-width: 768px) and (pointer: fine) {
+  html:not(.dt-native) :is(form, .dt-form-panel, dt-image-picker) {
+    --dt-control-size: clamp(2rem, 1.5rem + .3vw, 2.5rem);
+    --dt-form-font-size: clamp(.875rem, .55rem + .25vw, 1rem);
+  }
+  html:not(.dt-native) :is(form, .dt-form-panel, dt-image-picker) .nb-input {
+    font-size: var(--dt-form-font-size);
+    padding-block: .375rem;
+  }
+  html:not(.dt-native) :is(form, .dt-form-panel, dt-image-picker) .nb-btn {
+    padding-block: .25rem;
+  }
+  html:not(.dt-native) form > :not(:last-child) { margin-block-end: .75rem; }
+  html:not(.dt-native) .dt-form-panel,
+  html:not(.dt-native) .dt-dialog-surface:has(form) {
+    padding: clamp(1rem, .6rem + .5vw, 1.5rem);
+  }
+  html:not(.dt-native) form .grid { row-gap: .75rem; }
+  html:not(.dt-native) .dt-part-fields > div > :is(label, div:has(> label)) {
+    display: flex;
+    align-items: center;
+    min-height: 1.5rem;
+  }
+  html:not(.dt-native) .dt-action-secondary {
+    --dt-control-size: 1.5rem;
+    font-size: clamp(.625rem, .4rem + .15vw, .75rem);
+    min-width: 0;
+    line-height: 1;
+    padding-block: .125rem !important;
+  }
+  html:not(.dt-native) form :is(.category-combobox-wrapper, .variant-combobox-wrapper) > div:first-child > button {
+    --dt-control-size: 1.5rem;
+  }
+  html:not(.dt-native) .dt-quantity-preset { --dt-control-size: 1.75rem; }
+  html:not(.dt-native) .parts-sku-copy { --dt-control-size: 1.5rem; }
+  html:not(.dt-native) .dt-account-page { max-width: clamp(36rem, 32vw, 48rem); }
+  html:not(.dt-native) .dt-new-part-page { max-width: clamp(48rem, 46vw, 64rem); }
+  html:not(.dt-native) :is(.dt-account-page, .dt-new-part-page) > :not(:last-child) { margin-block-end: 1rem; }
+  html:not(.dt-native) :is(.dt-account-page, .dt-new-part-page) h1 { font-size: clamp(2rem, 1.5rem + .6vw, 2.75rem); }
+  html:not(.dt-native) form label { font-size: clamp(.75rem, .45rem + .2vw, .875rem); }
+}
+
+.dt-sidebar { overflow: visible; }
+.dt-sidebar-navigation { min-height: 0; flex: 1; overflow-y: auto; }
+.dt-sidebar-toggle {
+  --dt-control-size: 1.75rem;
+  position: absolute;
+  top: 1.25rem;
+  right: -.875rem;
+  width: 1.75rem;
+  height: 1.75rem;
+  z-index: 30;
+  border-radius: 50%;
+}
+
+.dt-switch-track {
+  position: relative;
+  display: inline-block;
+  width: 2.75rem;
+  height: 1.5rem;
+  flex-shrink: 0;
+  border: 2px solid var(--nb-border);
+  border-radius: 999px;
+  background: var(--nb-card-inner);
+}
+.dt-switch-track::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 2px;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  background: var(--nb-text);
+  transform: translateY(-50%);
+  transition: transform .15s ease;
+}
+input[name="is_universal"]:checked + .dt-switch-track { background: #FFE600; border-color: #000000; }
+input[name="is_universal"]:checked + .dt-switch-track::after { transform: translate(1.25rem, -50%); background: #000000; }
+select.nb-input {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-inline-end: 2rem !important;
+  background-image: var(--nb-select-arrow);
+  background-repeat: no-repeat;
+  background-size: 1rem 1rem;
+  background-position: right .875rem center;
+}
+select.nb-input option { color: var(--nb-text); background: var(--nb-input); }
+.parts-filter-options select { font-size: .875rem; }
+.parts-device-control > button, .dt-topbar-actions button[aria-expanded] { padding-inline-end: .875rem; }
+input[type="search"]::-webkit-search-cancel-button { display: none; }
+html.theme-switching *, html.theme-switching *::before, html.theme-switching *::after { transition: none !important; }
+@media (forced-colors: active) {
+  select.nb-input { appearance: auto; background-image: none; padding-inline-end: .75rem !important; }
+}
+:where(button, a, input, select, textarea):focus-visible {
+  outline: 3px solid var(--nb-on-surface, var(--nb-text));
+  outline-offset: 3px;
+}
+dt-icon { flex-shrink: 0; }
+.parts-page-header { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: .5rem 1rem; }
+.parts-page-header p { grid-column: 1 / -1; margin: 0; }
+.parts-filter-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
+.parts-filter-label { display: block; font-size: .75rem; font-weight: 700; margin-bottom: .375rem; }
+.parts-active-filters { grid-column: 1 / -1; }
+.parts-device-control { min-width: 0; }
+.parts-list-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem; border-bottom: 2px solid var(--nb-text); }
+.parts-mobile-sort { display: none; }
+.parts-column-sort { display: flex; align-items: center; gap: .375rem; width: 100%; font: inherit; color: inherit; cursor: pointer; text-align: inherit; }
+.parts-column-sort:hover { color: var(--nb-yellow); }
+.parts-column-sort:focus-visible { outline-color: var(--nb-yellow); }
+.dt-records tbody > tr + tr { border-top: 2px solid var(--nb-text); }
+
+@media (min-width: 768px) {
+  .parts-filters { display: grid; grid-template-columns: minmax(0, 1fr) minmax(16rem, .8fr); align-items: end; gap: .75rem 1rem; }
+  .parts-filter-options { margin-top: 0; }
+}
+
+.dt-modal-overlay {
+  top: var(--dt-viewport-top, 0px);
+  bottom: auto;
+  height: var(--dt-viewport-height, 100dvh);
+  padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+}
+.dt-dialog-surface {
+  max-height: 100%;
+  min-height: 0;
+  min-width: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  scrollbar-gutter: stable;
+}
+.dt-dialog-surface :where(h3, p) { overflow-wrap: anywhere; }
+.dt-dialog-surface :where(form > .flex, form > div > .flex) { flex-wrap: wrap; }
+.dt-dialog-surface :where(button[aria-label], button[title]) { flex-shrink: 0; }
+.dt-drawer {
+  width: min(20rem, calc(100vw - 1rem));
+  height: var(--dt-viewport-height, 100dvh);
+  top: var(--dt-viewport-top, 0px);
+  gap: 1.5rem;
+  padding-top: max(1rem, env(safe-area-inset-top));
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+.dt-drawer > div { flex-shrink: 0; }
+.dt-user-menu {
+  max-width: calc(100vw - 2rem);
+  max-height: calc(var(--dt-viewport-height, 100dvh) - 5rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.dt-toasts { max-width: min(24rem, calc(100vw - 2rem)); right: 1rem; bottom: max(1rem, env(safe-area-inset-bottom)); }
+.dt-toasts span { overflow-wrap: anywhere; }
+
+@media (max-width: 767px) {
+  .dt-topbar { padding-inline: 1rem; gap: .75rem; }
+  .dt-topbar-actions .dt-desktop-action { display: none; }
+  .dt-brand-name { font-size: clamp(1rem, 5vw, 1.25rem); }
+  .dt-topbar-actions button { gap: .375rem; padding-inline: .5rem; }
+  .dt-dialog-surface { padding: clamp(1rem, 4vw, 1.5rem); }
+  .dt-device-filter { position: fixed; left: 1rem; right: 1rem; top: 5rem; width: auto; max-height: calc(var(--dt-viewport-height, 100dvh) - 6rem); overflow-y: auto; }
+  .parts-list-toolbar { display: grid; grid-template-columns: minmax(0, 1fr) minmax(9rem, 1.3fr); gap: .75rem; }
+  .parts-mobile-sort { display: block; }
+  .parts-list-toolbar select { font-size: .875rem; }
+  .dt-records { display: block; }
+  .dt-records thead { display: none; }
+  .dt-records tbody { display: grid; gap: 0; padding: 1rem; }
+  .dt-records tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; border: 0; padding-bottom: 1rem; }
+  .dt-records tbody > tr + tr { border-top: 2px solid var(--nb-text); padding-top: 1rem; }
+  .dt-records tr:last-child { padding-bottom: 0; }
+  .dt-records td { display: block; padding: 0; text-align: left; min-width: 0; overflow-wrap: anywhere; }
+  .dt-records td::before { content: attr(data-label); display: block; font-size: .75rem; font-weight: 700; margin-bottom: .375rem; color: var(--nb-text); }
+  .parts-list .dt-records td[data-label="Repuesto"]::before, .parts-list .dt-records td[data-label="Acciones"]::before { display: none; }
+  .parts-list .dt-records td[data-label="Repuesto"] strong { font-size: .875rem; line-height: 1.35; }
+  .dt-records td[data-label="Repuesto"], .dt-records td[data-label="Repuesto y motivo"], .dt-records td[data-label="Acciones"] { grid-column: 1 / -1; }
+  .dt-records td[data-label="Acciones"] > div { display: flex; flex-wrap: wrap; }
+  .dt-records td[data-label="Acciones"] > div > :first-child { flex: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
 
 /* Neobrutalism Core Primitives */
@@ -181,208 +411,98 @@ body.modal-open main {
   overscroll-behavior: none !important;
 }
 
-/* =========================================================
-   Neobrutalist Dark Mode Global Adaptations
-   Preserves crisp WCAG contrast, sharp borders and bold accents.
-   Strictly scoped under .dark — Light Mode remains 100% untouched.
-   ========================================================= */
-
-/* Background surfaces in dark mode */
-.dark .bg-\[\#F8F6EE\],
-.dark .bg-\[\#FBF8EF\] {
-  background-color: #101114 !important;
+/* Each painted surface owns its foreground, including nested badges and icon boxes. */
+.dark :is(.bg-\[\#F8F6EE\], .bg-\[\#FBF8EF\]) {
+  background-color: var(--nb-bg) !important;
+  --nb-on-surface: var(--nb-text);
+  --nb-on-muted: #D1D5DB;
+  --nb-on-subtle: #9CA3AF;
+  --nb-on-error: #FDA4AF;
+  color: var(--nb-on-surface);
 }
+.dark .bg-\[\#FFFDF0\] { background-color: #1B1E26 !important; --nb-on-surface: var(--nb-text); --nb-on-muted: #D1D5DB; --nb-on-subtle: #9CA3AF; color: var(--nb-on-surface); }
+.dark .bg-white { background-color: var(--nb-card) !important; --nb-on-surface: var(--nb-text); --nb-on-muted: #D1D5DB; --nb-on-subtle: #9CA3AF; --nb-on-error: #FDA4AF; color: var(--nb-on-surface); }
+.dark :is(header.bg-white, aside.bg-white, nav.bg-white) { background-color: #14161B !important; border-color: var(--nb-border) !important; }
+.dark .text-black, .dark .text-white { color: var(--nb-on-surface) !important; }
+.dark :is(.text-black\/90, .text-black\/85, .text-black\/80) { color: var(--nb-on-surface) !important; }
+.dark :is(.text-black\/70, .text-black\/65, .text-black\/60) { color: var(--nb-on-muted) !important; }
+.dark :is(.text-black\/50, .text-black\/40) { color: var(--nb-on-subtle) !important; }
+.dark :is(.text-black\/30, .text-black\/20) { color: var(--nb-on-subtle) !important; }
+.dark .text-\[\#2563EB\] { color: #93C5FD !important; }
+.dark .text-\[\#2a2f63\] { color: var(--nb-on-surface) !important; }
+.dark .border-black { border-color: var(--nb-border) !important; }
+.dark :is(.border-black\/20, .border-black\/15, .border-black\/10, .border-neutral-200) { border-color: #697385 !important; }
+.dark :is(.divide-black, .divide-black\/10, .divide-black\/15) > :not(:last-child) { border-color: #697385 !important; }
+.dark :is(.bg-neutral-50, .bg-neutral-100) { background-color: #1F222B !important; --nb-on-surface: var(--nb-text); --nb-on-muted: #D1D5DB; --nb-on-subtle: #9CA3AF; }
+.dark .bg-neutral-200 { background-color: #343946 !important; --nb-on-surface: #F9FAFB; --nb-on-muted: #D1D5DB; --nb-on-subtle: #C4CAD4; color: var(--nb-on-surface) !important; border-color: var(--nb-border) !important; }
+.dark :is(.hover\:bg-neutral-50, .hover\:bg-neutral-100, .hover\:bg-black\/5):hover { background-color: #262933 !important; }
+.dark .hover\:bg-\[\#FFFDF0\]:hover { background-color: #22252E !important; }
+.dark .nb-btn:where(.bg-white) { background-color: #21242C !important; border-color: var(--nb-border) !important; }
+.dark .nb-input { --nb-on-surface: var(--nb-text); --nb-on-muted: #D1D5DB; --nb-on-subtle: #9CA3AF; color: var(--nb-text); }
 
-.dark .bg-\[\#FFFDF0\] {
-  background-color: #1B1E26 !important;
-}
-
-.dark .bg-white {
-  background-color: #181A20 !important;
-}
-
-.dark header.bg-white,
-.dark aside.bg-white,
-.dark nav.bg-white {
-  background-color: #14161B !important;
-  border-color: #383D4A !important;
-}
-
-/* Base typography in dark mode */
-.dark .text-black {
-  color: #F9FAFB !important;
-}
-
-.dark .text-black\/90,
-.dark .text-black\/85,
-.dark .text-black\/80 {
-  color: #F3F4F6 !important;
-}
-
-.dark .text-black\/70,
-.dark .text-black\/65,
-.dark .text-black\/60 {
-  color: #D1D5DB !important;
-}
-
-.dark .text-black\/50,
-.dark .text-black\/40 {
-  color: #9CA3AF !important;
-}
-
-.dark .text-\[\#2563EB\] {
-  color: #60A5FA !important;
-}
-
-.dark .text-\[\#2a2f63\] {
-  color: #FFFFFF !important;
-}
-
-/* Borders and dividers in dark mode */
-.dark .border-black {
-  border-color: #383D4A !important;
-}
-
-.dark .border-black\/20,
-.dark .border-black\/15,
-.dark .border-black\/10,
-.dark .border-neutral-200 {
-  border-color: #2D323E !important;
-}
-
-.dark .divide-black > :not([hidden]) ~ :not([hidden]) {
-  border-color: #383D4A !important;
-}
-
-.dark .divide-black\/10 > :not([hidden]) ~ :not([hidden]),
-.dark .divide-black\/15 > :not([hidden]) ~ :not([hidden]) {
-  border-color: #2D323E !important;
-}
-
-/* Secondary surface backgrounds in dark mode */
-.dark .bg-neutral-50,
-.dark .bg-neutral-100 {
-  background-color: #1F222B !important;
-}
-
-.dark .bg-neutral-200 {
-  background-color: #232732 !important;
-  color: #D1D5DB !important;
-  border-color: #383D4A !important;
-}
-
-.dark .bg-neutral-200 * {
-  color: #D1D5DB !important;
-}
-
-/* Clean hover states in dark mode */
-.dark .hover\:bg-neutral-50:hover,
-.dark .hover\:bg-neutral-100:hover,
-.dark .hover\:bg-black\/5:hover {
-  background-color: #262933 !important;
-}
-
-.dark .hover\:bg-\[\#FFFDF0\]:hover {
-  background-color: #22252E !important;
-}
-
-.dark tr.hover\:bg-\[\#FFFDF0\]:hover {
-  background-color: #22252E !important;
-}
-
-/* White buttons and chips default appearance in dark mode */
-.dark .nb-btn.bg-white,
-.dark button.nb-btn.bg-white {
-  background-color: #21242C !important;
-  color: #F9FAFB !important;
-  border-color: #383D4A !important;
-}
-
-.dark .nb-btn.bg-white *,
-.dark button.nb-btn.bg-white * {
-  color: #F9FAFB !important;
-  stroke: #F9FAFB !important;
-}
-
-/* Interactive elements hovering to yellow #FFE600 must ALWAYS turn yellow with black text/icons */
-.dark .hover\:bg-\[\#FFE600\]:hover,
-.dark [class*="hover:bg-[#FFE600]"]:hover {
-  background-color: #FFE600 !important;
-  color: #000000 !important;
+.dark :is(.bg-\[\#FFE600\], .bg-\[\#FFD700\], .bg-\[\#38BDF8\], .bg-\[\#4ADE80\], .bg-\[\#FB923C\], .bg-\[\#F87171\], .bg-\[\#C084FC\], .bg-\[\#FF5A5F\], .\!bg-\[\#FFE600\]) {
+  --nb-on-surface: #000000;
+  --nb-on-muted: #000000;
+  --nb-on-subtle: #000000;
+  --nb-on-error: #000000;
+  color: var(--nb-on-surface) !important;
   border-color: #000000 !important;
 }
-
-.dark .hover\:bg-\[\#FFE600\]:hover *,
-.dark [class*="hover:bg-[#FFE600]"]:hover * {
-  color: #000000 !important;
-  stroke: #000000 !important;
+.dark :is(.hover\:bg-\[\#FFE600\], .hover\:bg-\[\#FFD700\], .hover\:bg-yellow-400):hover {
+  --nb-on-surface: #000000;
+  --nb-on-muted: #000000;
+  --nb-on-subtle: #000000;
+  --nb-on-error: #000000;
+  color: var(--nb-on-surface) !important;
+  border-color: #000000 !important;
 }
-
-/* Accent Containers (KPI cards, bright badges):
-   Ensure bold, solid, 100% opaque, high-contrast black text inside vibrant backgrounds in all modes */
-.dark .bg-\[\#FFE600\],
-.dark .bg-\[\#FFD700\],
-.dark .bg-\[\#38BDF8\],
-.dark .bg-\[\#4ADE80\],
-.dark .bg-\[\#FB923C\],
-.dark .bg-\[\#F87171\] {
-  color: #000000 !important;
-}
-
-.dark .bg-\[\#FFE600\] *,
-.dark .bg-\[\#FFD700\] *,
-.dark .bg-\[\#38BDF8\] *,
-.dark .bg-\[\#4ADE80\] *,
-.dark .bg-\[\#FB923C\] *,
-.dark .bg-\[\#F87171\] * {
-  color: #000000 !important;
-  stroke: #000000 !important;
-}
-
-.dark .bg-\[\#FFE600\] [class*="text-black"],
-.dark .bg-\[\#FFD700\] [class*="text-black"],
-.dark .bg-\[\#38BDF8\] [class*="text-black"],
-.dark .bg-\[\#4ADE80\] [class*="text-black"],
-.dark .bg-\[\#FB923C\] [class*="text-black"],
-.dark .bg-\[\#F87171\] [class*="text-black"] {
-  color: #000000 !important;
-  opacity: 1 !important;
-}
-
-/* Inner white icon boxes inside vibrant accent cards stay crisp white with black icon */
-.dark .bg-\[\#FFE600\] .bg-white,
-.dark .bg-\[\#38BDF8\] .bg-white,
-.dark .bg-\[\#4ADE80\] .bg-white,
-.dark .bg-\[\#F87171\] .bg-white,
-.dark .bg-\[\#FF5A5F\] .bg-white {
+.dark .hover\:bg-\[\#FFE600\]:hover { background-color: #FFE600 !important; }
+.dark .hover\:bg-\[\#FFD700\]:hover { background-color: #FFD700 !important; }
+.dark .hover\:bg-yellow-400:hover { background-color: #FACC15 !important; }
+.dark :is(.bg-\[\#FFE600\], .bg-\[\#38BDF8\], .bg-\[\#4ADE80\], .bg-\[\#F87171\], .bg-\[\#FF5A5F\]) .bg-white {
   background-color: #FFFFFF !important;
-  color: #000000 !important;
+  --nb-on-surface: #000000;
+  --nb-on-muted: #000000;
+  --nb-on-subtle: #000000;
+  color: var(--nb-on-surface) !important;
   border-color: #000000 !important;
 }
-
-.dark .bg-\[\#FFE600\] .bg-white *,
-.dark .bg-\[\#38BDF8\] .bg-white *,
-.dark .bg-\[\#4ADE80\] .bg-white *,
-.dark .bg-\[\#F87171\] .bg-white *,
-.dark .bg-\[\#FF5A5F\] .bg-white * {
-  color: #000000 !important;
-  stroke: #000000 !important;
+.dark .bg-black {
+  --nb-on-surface: #F9FAFB;
+  --nb-on-muted: #D1D5DB;
+  --nb-on-subtle: #D1D5DB;
+  --nb-on-error: #FDA4AF;
+  color: var(--nb-on-surface) !important;
+  border-color: var(--nb-border) !important;
 }
-
-/* Red / Crimson buttons and badges contrast in dark mode */
-.dark .bg-\[\#DC2626\],
-.dark .bg-\[\#DC2626\] * {
+.dark .bg-\[\#DC2626\], .dark .hover\:bg-red-600:hover {
   background-color: #DC2626 !important;
-  color: #FFFFFF !important;
-  stroke: #FFFFFF !important;
+  --nb-on-surface: #FFFFFF;
+  --nb-on-muted: #FFFFFF;
+  --nb-on-subtle: #FFFFFF;
+  --nb-on-error: #FFFFFF;
+  color: var(--nb-on-surface) !important;
+  border-color: var(--nb-border) !important;
 }
+.dark :is(.bg-red-50, .bg-red-100), .dark :is(.hover\:bg-red-50, .hover\:bg-red-100):hover {
+  background-color: #3E1F28 !important;
+  --nb-on-surface: #FFD4D7;
+  --nb-on-muted: #FFD4D7;
+  --nb-on-subtle: #FFD4D7;
+  --nb-on-error: #FFD4D7;
+  color: var(--nb-on-surface) !important;
+}
+.dark :is(.text-red-600, .text-red-500, .text-red-900), .dark .hover\:text-red-600:hover { color: var(--nb-on-error) !important; }
+.dark .text-\[\#FFE600\] { color: #FFE600 !important; }
+.dark aside a.hover\:bg-\[\#FFFDF0\]:hover:not(.\!bg-\[\#FFE600\]) { color: #FFE600 !important; --nb-on-surface: #FFE600; border-color: var(--nb-border) !important; }
+.dark .\!bg-\[\#FFE600\]:is(:hover, :focus-visible) { background-color: #FFE600 !important; }
+.dark input[name="is_universal"] + div::after { background-color: var(--nb-text); border-color: var(--nb-text); }
+.dark input[name="is_universal"]:checked + div { background-color: #FFE600 !important; border-color: #000000 !important; }
+.dark input[name="is_universal"]:checked + div::after { background-color: #000000; border-color: #000000; }
+input[name="is_universal"]:focus-visible + div { outline: 3px solid var(--nb-text); outline-offset: 3px; }
 
-/* Red alert card text contrast */
-.dark .bg-\[\#FF5A5F\],
-.dark .bg-\[\#FF5A5F\] * {
-  color: #FFFFFF !important;
-  stroke: #FFFFFF !important;
-}
+.bg-\[\#FF5A5F\] { --nb-on-surface: #000000; --nb-on-muted: #000000; color: #000000 !important; }
+.bg-\[\#FF5A5F\].text-white, .bg-\[\#FF5A5F\] .text-white { color: var(--nb-on-surface) !important; }
 
 /* Floating Neobrutalist Toasts */
 .nb-toast-info {
@@ -453,30 +573,5 @@ input[type="file"]::file-selector-button:active {
 .dark input[type="file"]::file-selector-button:hover {
   background-color: #FFD700 !important;
   color: #000000 !important;
-}
-
-/* Sidebar navigation links */
-.dark aside a.hover\:bg-\[\#FFFDF0\]:hover:not(.\!bg-\[\#FFE600\]):not(.router-link-active) {
-  background-color: #252833 !important;
-  color: #FFE600 !important;
-  border-color: #383D4A !important;
-}
-
-.dark aside a.hover\:bg-\[\#FFFDF0\]:hover:not(.\!bg-\[\#FFE600\]):not(.router-link-active) * {
-  color: #FFE600 !important;
-  stroke: #FFE600 !important;
-}
-
-/* Active navigation links (routerLinkActive) in dark mode: ALWAYS solid black text/icon on yellow */
-.dark .\!bg-\[\#FFE600\],
-.dark .\!bg-\[\#FFE600\] *,
-.dark a.\!bg-\[\#FFE600\],
-.dark a.\!bg-\[\#FFE600\] *,
-.dark a.router-link-active.\!bg-\[\#FFE600\],
-.dark a.router-link-active.\!bg-\[\#FFE600\] * {
-  background-color: #FFE600 !important;
-  color: #000000 !important;
-  stroke: #000000 !important;
-  border-color: #000000 !important;
 }
 

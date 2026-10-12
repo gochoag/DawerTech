@@ -22,7 +22,7 @@ try {
   ensureAndroidEnv(androidDir);
 
   // 1. Compilar aplicación web
-  run('node scripts/write-config.mjs');
+  run('node scripts/write-config.mjs --android');
   run('npx ng build');
 
   // 2. Sincronizar assets con Capacitor Android

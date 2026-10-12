@@ -2,7 +2,7 @@
 
 ## Antes de publicar
 
-Necesitas una cuenta de PythonAnywhere y un proyecto de Cloudflare Pages. Define un dominio real para la API y la web. La API y el APK requieren HTTPS. Mantén fuera del repositorio la clave JWT, la base, las imágenes, los respaldos y el keystore Android.
+Para publicar en Internet, necesitas una cuenta de PythonAnywhere y un proyecto de Cloudflare Pages. Define un dominio real para la API y la web y usa HTTPS. En la red local del taller se admite HTTP con la IP privada del PC. Mantén fuera del repositorio la clave JWT, la base, las imágenes, los respaldos y el keystore Android.
 
 ## PythonAnywhere
 
@@ -24,7 +24,11 @@ Desde `frontend`, ejecuta `pnpm install`, `pnpm run build:android` y genera los 
 
 Para un APK de instalación directa, ejecuta una sola vez `scripts/prepare-release-signing.ps1` en PowerShell. Crea un keystore y `android/key.properties`, ambos ignorados por Git. **Respalda ambos archivos fuera del equipo antes de distribuir el APK**: las actualizaciones deben firmarse con la misma clave. Después, desde `frontend/android`, ejecuta `./gradlew assembleRelease` (Windows: `.\gradlew.bat assembleRelease`). El APK firmado queda en `android/app/build/outputs/apk/release`. También puedes usar Android Studio y el mismo keystore.
 
-Al primer ingreso en Android escribe `https://TU_USUARIO.pythonanywhere.com/api/v1`, correo y contraseña. La URL se conserva localmente; el token de renovación se guarda mediante Android Keystore al activar biometría. Comprueba el desbloqueo en un Android físico antes de distribuir el APK.
+Para el taller, `pnpm run android:generate` detecta la IP local del PC y genera el APK en `frontend/apk-release/dawertech-release.apk`. Arranca el backend con `uv run flask run` desde `backend`; `.flaskenv` configura `0.0.0.0:5000`. El celular debe estar en la misma red y el firewall debe permitir este puerto en la red privada. Si la detección encuentra más de una interfaz física, define `DAWERTECH_ANDROID_API_URL=http://IP_DEL_PC:5000/api/v1` en `frontend/.env`. Para Internet, define `DAWERTECH_API_URL` y `DAWERTECH_ANDROID_API_URL` con `https://TU_USUARIO.pythonanywhere.com/api/v1` en el archivo de entorno antes de compilar. Puedes separar entornos usando `DAWERTECH_ENV_FILE=.env.production`. Solo estas URLs públicas se incluyen en los assets; no pongas claves ni contraseñas en las variables del frontend.
+
+Al primer ingreso en Android usa correo y contraseña. La sesión se guarda siempre mediante Android Keystore, aunque no actives biometría. En **Mi cuenta** puedes activar la protección del acceso después de 7 días de inactividad; admite huella, rostro y el PIN, patrón o contraseña del dispositivo según lo configurado en Android. Una apertura reciente no solicita desbloqueo. El botón Atrás confirma la salida de la app y conserva la sesión; **Cerrar sesión** confirma la eliminación del acceso guardado y obliga a volver a usar correo y contraseña. La sesión recordada de Android no caduca por fecha; sigue sujeta a revocación por cierre de sesión, cambio de contraseña o desactivación de la cuenta. La web mantiene una renovación de 365 días. Comprueba el desbloqueo y el botón Atrás en un Android físico antes de distribuir el APK.
+
+Si cambias la IP del PC, actualiza `DAWERTECH_ANDROID_API_URL` en `frontend/.env` y vuelve a ejecutar `pn android:dev`. Para evitar cambios, configura una reserva DHCP en el router. Los iconos adaptativos usan `dt-app-foreground.svg` con margen para las máscaras de Android; `dt-mark.svg` sigue siendo el logo de la interfaz.
 
 ## Respaldo y restauración
 

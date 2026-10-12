@@ -14,6 +14,8 @@ import { AccountComponent, UsersComponent } from './features/account';
 const signedIn: CanActivateFn = async () => {
   const auth = inject(AuthService);
   const router = inject(Router);
+  await auth.initialize();
+  if (auth.checkInactivity()) return router.parseUrl('/login');
 
   if (auth.accessToken() && !auth.isTokenExpired()) {
     return true;

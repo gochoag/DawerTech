@@ -45,6 +45,8 @@ export interface Movement {
   created_at: string;
 }
 
+export type PartNameMatch = Pick<Part, 'id' | 'sku' | 'name' | 'variant' | 'category' | 'archived'>;
+
 export interface PageResult<T> {
   items: T[];
   total: number;

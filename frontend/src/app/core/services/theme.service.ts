@@ -38,6 +38,7 @@ export class ThemeService {
     this.isDark.set(dark);
     if (typeof document !== 'undefined') {
       const root = document.documentElement;
+      root.classList.add('theme-switching');
       if (dark) {
         root.classList.add('dark');
         document.body?.classList.add('dark');
@@ -45,6 +46,8 @@ export class ThemeService {
         root.classList.remove('dark');
         document.body?.classList.remove('dark');
       }
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#101114' : '#F8F6EE');
+      requestAnimationFrame(() => requestAnimationFrame(() => root.classList.remove('theme-switching')));
     }
   }
 }

@@ -56,12 +56,14 @@ def list_devices_paged(search: str = "", ids: set[int] | None = None, page: int 
         query = select(DeviceORM)
         if ids:
             query = query.where(DeviceORM.id.in_(ids))
-        if search:
+        # Every word must match, but may belong to a different catalog field.
+        # This lets "samsung a02" find brand Samsung / model Galaxy A02.
+        for term in search.split():
             query = query.where(
                 or_(
-                    DeviceORM.brand.ilike(f"%{search}%"),
-                    DeviceORM.name.ilike(f"%{search}%"),
-                    DeviceORM.code.ilike(f"%{search}%"),
+                    DeviceORM.brand.icontains(term, autoescape=True),
+                    DeviceORM.name.icontains(term, autoescape=True),
+                    DeviceORM.code.icontains(term, autoescape=True),
                 )
             )
         total = session.scalar(select(func.count()).select_from(query.subquery())) or 0

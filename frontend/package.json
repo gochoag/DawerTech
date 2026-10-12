@@ -3,12 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "start": "node scripts/write-config.mjs && ng serve --host 127.0.0.1",
+    "start": "node scripts/write-config.mjs && ng serve --host 0.0.0.0",
     "build": "node scripts/write-config.mjs && ng build",
-    "build:android": "pnpm run build && cap sync android",
+    "build:android": "node scripts/write-config.mjs --android && ng build && cap sync android",
     "android:generate": "node scripts/android-release.mjs",
     "android:dev": "node scripts/android-dev.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
+    "test:session": "node --test tests/*.test.mjs",
     "check:rules": "python ../scripts/check_rules.py"
   },
   "dependencies": {
@@ -22,6 +23,7 @@
     "@aparajita/capacitor-biometric-auth": "10.0.0",
     "@aparajita/capacitor-secure-storage": "8.0.1",
     "@capacitor/android": "8.5.2",
+    "@capacitor/app": "8.1.1",
     "@capacitor/core": "8.5.2",
     "@ionic/angular": "9.0.5",
     "ionicons": "^8.0.0",

@@ -1,17 +1,18 @@
 import { ChangeDetectorRef, Component, HostListener, inject, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { NgTemplateOutlet } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { ApiService, ModalLockService, ToastService } from '../../../core/services';
-import { Device, Movement, Part, localDate, money } from '../../../core/models';
-import { IconComponent, ImagePickerComponent } from '../../../shared/components';
+import { Device, Movement, Part, PartNameMatch, localDate, money } from '../../../core/models';
+import { DialogSurfaceDirective, IconComponent, ImagePickerComponent } from '../../../shared/components';
 
 @Component({
   standalone: true,
-  imports: [FormsModule, RouterLink, IconComponent, ImagePickerComponent],
+  imports: [DialogSurfaceDirective, FormsModule, NgTemplateOutlet, RouterLink, IconComponent, ImagePickerComponent],
   template: `
     <!-- Top Back and Header (Centered Container) -->
-    <div [class]="isNew ? 'max-w-3xl mx-auto space-y-6' : 'max-w-5xl mx-auto space-y-6'">
+    <div [class]="isNew ? 'dt-new-part-page max-w-3xl mx-auto space-y-6' : 'max-w-5xl mx-auto space-y-6'">
       <div>
         <a routerLink="/parts" class="nb-btn bg-white hover:bg-neutral-100 text-black px-3 py-1.5 rounded-md text-xs font-black gap-1.5 mb-3 inline-flex no-underline">
           <dt-icon name="arrow-down-left" sizeClass="w-4 h-4 rotate-45" />
@@ -39,23 +40,23 @@ import { IconComponent, ImagePickerComponent } from '../../../shared/components'
       @else {
         <!-- NEW PART CREATION: Single Centered Clean Card -->
         @if (isNew) {
-          <div class="nb-card p-6 sm:p-8 rounded-lg">
+          <div class="dt-form-panel nb-card p-6 sm:p-8 rounded-lg">
             <div class="pb-3 border-b-2 border-black mb-5">
               <h2 class="text-base font-black uppercase text-black">Datos del nuevo repuesto</h2>
             </div>
 
             <form (ngSubmit)="save()" class="space-y-5">
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div class="dt-part-fields grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
                 <!-- SKU -->
-                <div>
+                <div class="xl:col-span-2">
                   <div class="flex items-center justify-between mb-1 gap-2">
-                    <label class="block text-xs font-black uppercase text-black">
+                    <label class="block text-xs font-black uppercase text-black" for="part-detail-sku">
                       Código SKU
                       <span class="text-[10px] font-bold text-black/50 lowercase ml-1">(opcional)</span>
                     </label>
                     <button
                       type="button"
-                      class="nb-btn bg-[#FFE600] hover:bg-[#FFD700] px-2 py-0.5 text-[10px] font-black rounded gap-1"
+                      class="dt-action-secondary nb-btn bg-[#FFE600] hover:bg-[#FFD700] px-2 py-0.5 text-[10px] font-black rounded gap-1"
                       (click)="generateSku()"
                       [disabled]="generatingSku"
                       title="Sugerir SKU según categoría y nombre"
@@ -64,7 +65,7 @@ import { IconComponent, ImagePickerComponent } from '../../../shared/components'
                       <span>{{ generatingSku ? 'Generando…' : 'Autogenerar' }}</span>
                     </button>
                   </div>
-                  <input
+                  <input id="part-detail-sku" aria-label="Código SKU"
                     name="sku"
                     [(ngModel)]="form.sku"
                     maxlength="64"
@@ -76,23 +77,10 @@ import { IconComponent, ImagePickerComponent } from '../../../shared/components'
                   </p>
                 </div>
 
-                <!-- Name -->
-                <div>
-                  <label class="block text-xs font-black uppercase text-black mb-1">Nombre comercial</label>
-                  <input
-                    name="name"
-                    [(ngModel)]="form.name"
-                    required
-                    maxlength="160"
-                    placeholder="Ej. Pantalla OLED Incell"
-                    class="nb-input w-full p-2 text-xs font-bold rounded"
-                  />
-                </div>
-
                 <!-- Category Combobox -->
-                <div class="category-combobox-wrapper relative">
-                  <div class="flex items-center justify-between mb-1">
-                    <label class="block text-xs font-black uppercase text-black">Categoría</label>
+                <div class="category-combobox-wrapper relative xl:col-span-2">
+                  <div class="flex flex-wrap items-center justify-between gap-2 mb-1">
+                    <label class="block text-xs font-black uppercase text-black" for="part-detail-category">Categoría</label>
                     <button
                       type="button"
                       (click)="openNewCategoryModal(form.category)"
@@ -104,7 +92,7 @@ import { IconComponent, ImagePickerComponent } from '../../../shared/components'
                     </button>
                   </div>
                   <div class="relative">
-                    <input
+                    <input id="part-detail-category" aria-label="Categoría"
                       type="text"
                       name="category"
                       [(ngModel)]="form.category"
@@ -119,9 +107,9 @@ import { IconComponent, ImagePickerComponent } from '../../../shared/components'
                     />
                     <button
                       type="button"
-                      (click)="categoryDropdownOpen = !categoryDropdownOpen; $event.stopPropagation()"
+                      aria-label="Mostrar categorías" (click)="categoryDropdownOpen = !categoryDropdownOpen; $event.stopPropagation()"
                       tabindex="-1"
-                      class="absolute right-2 top-1/2 -translate-y-1/2 text-black/60 dark:text-neutral-400 hover:text-black dark:hover:text-white p-0.5 cursor-pointer"
+                      class="dt-combobox-toggle absolute right-0 top-1/2 -translate-y-1/2 text-black/60 dark:text-neutral-400 hover:text-black dark:hover:text-white p-0.5 cursor-pointer"
                     >
                       <dt-icon name="chevron-down" sizeClass="w-3.5 h-3.5 transition-transform" [class.rotate-180]="categoryDropdownOpen" />
                     </button>
@@ -162,10 +150,39 @@ import { IconComponent, ImagePickerComponent } from '../../../shared/components'
                   }
                 </div>
 
+                <!-- Name -->
+                <div class="sm:col-span-2 xl:col-span-4">
+                  <label class="block text-xs font-black uppercase text-black mb-1" for="part-detail-name">Nombre comercial</label>
+                  <input id="part-detail-name" aria-label="Nombre comercial"
+                    name="name"
+                    [(ngModel)]="form.name"
+                    (ngModelChange)="nameChanged()"
+                    aria-describedby="part-name-feedback"
+                    required
+                    maxlength="160"
+                    placeholder="Ej. Pantalla OLED Incell"
+                    class="nb-input w-full p-2 text-xs font-bold rounded"
+                  />
+                  <div id="part-name-feedback" class="mt-2" aria-live="polite">
+                    @if (checkingName) { <p class="text-xs font-bold">Revisando nombres existentes…</p> }
+                    @if (nameMatchesTotal) {
+                      <section class="border-2 border-black bg-[#FFFDF0] rounded-md p-3 space-y-2" aria-label="Repuestos con el mismo nombre">
+                        <strong class="block text-sm font-black">Ya hay {{ nameMatchesTotal }} {{ nameMatchesTotal === 1 ? 'repuesto' : 'repuestos' }} con este nombre</strong>
+                        <p class="text-xs font-bold">Revisa la calidad y el registro existente. Puedes crear otro si corresponde a una referencia distinta.</p>
+                        <ng-container [ngTemplateOutlet]="matchingPartsList" />
+                      </section>
+                    }
+                    @if (nameCheckError) {
+                      <p class="text-xs font-bold">{{ nameCheckError }}</p>
+                      <button type="button" class="nb-btn bg-white px-3 py-1 text-xs rounded mt-2" (click)="refreshNameMatches()">Reintentar revisión</button>
+                    }
+                  </div>
+                </div>
+
                 <!-- Variant Combobox -->
-                <div class="variant-combobox-wrapper relative">
-                  <div class="flex items-center justify-between mb-1">
-                    <label class="block text-xs font-black uppercase text-black">Variante / Calidad</label>
+                <div class="variant-combobox-wrapper relative xl:col-span-2">
+                  <div class="flex flex-wrap items-center justify-between gap-2 mb-1">
+                    <label class="block text-xs font-black uppercase text-black" for="part-detail-variant">Variante / Calidad</label>
                     <button
                       type="button"
                       (click)="openNewVariantModal(form.variant)"
@@ -177,7 +194,7 @@ import { IconComponent, ImagePickerComponent } from '../../../shared/components'
                     </button>
                   </div>
                   <div class="relative">
-                    <input
+                    <input id="part-detail-variant" aria-label="Variante o calidad"
                       type="text"
                       name="variant"
                       [(ngModel)]="form.variant"
@@ -191,9 +208,9 @@ import { IconComponent, ImagePickerComponent } from '../../../shared/components'
                     />
                     <button
                       type="button"
-                      (click)="variantDropdownOpen = !variantDropdownOpen; $event.stopPropagation()"
+                      aria-label="Mostrar variantes" (click)="variantDropdownOpen = !variantDropdownOpen; $event.stopPropagation()"
                       tabindex="-1"
-                      class="absolute right-2 top-1/2 -translate-y-1/2 text-black/60 dark:text-neutral-400 hover:text-black dark:hover:text-white p-0.5 cursor-pointer"
+                      class="dt-combobox-toggle absolute right-0 top-1/2 -translate-y-1/2 text-black/60 dark:text-neutral-400 hover:text-black dark:hover:text-white p-0.5 cursor-pointer"
                     >
                       <dt-icon name="chevron-down" sizeClass="w-3.5 h-3.5 transition-transform" [class.rotate-180]="variantDropdownOpen" />
                     </button>
@@ -236,8 +253,8 @@ import { IconComponent, ImagePickerComponent } from '../../../shared/components'
 
                 <!-- Purchase Price -->
                 <div>
-                  <label class="block text-xs font-black uppercase text-black mb-1">Precio Compra (USD)</label>
-                  <input
+                  <label class="block text-xs font-black uppercase text-black mb-1" for="part-detail-purchase">Precio Compra (USD)</label>
+                  <input id="part-detail-purchase" aria-label="Precio de compra (USD)"
                     name="purchase"
                     type="number"
                     min="0"
@@ -250,8 +267,8 @@ import { IconComponent, ImagePickerComponent } from '../../../shared/components'
 
                 <!-- Sale Price -->
                 <div>
-                  <label class="block text-xs font-black uppercase text-black mb-1">Precio Venta (USD)</label>
-                  <input
+                  <label class="block text-xs font-black uppercase text-black mb-1" for="part-detail-sale">Precio Venta (USD)</label>
+                  <input id="part-detail-sale" aria-label="Precio de venta (USD)"
                     name="sale"
                     type="number"
                     min="0"
@@ -263,9 +280,9 @@ import { IconComponent, ImagePickerComponent } from '../../../shared/components'
                 </div>
 
                 <!-- Minimum Stock -->
-                <div>
-                  <label class="block text-xs font-black uppercase text-black mb-1">Stock Mínimo</label>
-                  <input
+                <div class="xl:col-span-2">
+                  <label class="block text-xs font-black uppercase text-black mb-1" for="part-detail-minimum">Stock Mínimo</label>
+                  <input id="part-detail-minimum" aria-label="Stock mínimo"
                     name="minimum"
                     type="number"
                     min="0"
@@ -277,9 +294,9 @@ import { IconComponent, ImagePickerComponent } from '../../../shared/components'
                 </div>
 
                 <!-- Initial Stock -->
-                <div>
-                  <label class="block text-xs font-black uppercase text-black mb-1">Existencia Inicial</label>
-                  <input
+                <div class="xl:col-span-2">
+                  <label class="block text-xs font-black uppercase text-black mb-1" for="part-detail-initial">Existencia Inicial</label>
+                  <input id="part-detail-initial" aria-label="Stock inicial"
                     name="initial"
                     type="number"
                     min="0"
@@ -295,7 +312,7 @@ import { IconComponent, ImagePickerComponent } from '../../../shared/components'
               <div class="p-4 bg-[#FFFDF0] dark:bg-[#1E2028] border-2 border-black rounded-lg">
                 <dt-image-picker
                   label="Fotografía del repuesto (opcional)"
-                  hint="Puedes tomar una foto o elegirla de archivos. Se subirá automáticamente al crear."
+                  hint="PNG, JPEG o WebP hasta 5 MB. Se subirá al crear el repuesto."
                   [previewUrl]="selectedPhotoPreview"
                   (fileSelected)="onPhotoFileSelected($event)"
                   (cleared)="clearSelectedPhoto()"
@@ -310,20 +327,20 @@ import { IconComponent, ImagePickerComponent } from '../../../shared/components'
                     Marca si es consumible del taller (cintas, alcohol) o compatible con cualquier modelo.
                   </p>
                 </div>
-                <label class="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" name="is_universal" [(ngModel)]="form.is_universal" class="sr-only peer" />
-                  <div class="w-11 h-6 bg-neutral-200 border-2 border-black rounded-full peer peer-checked:bg-[#FFE600] after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-black after:border after:border-black after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full"></div>
+                <label class="relative inline-flex items-center justify-center min-h-11 shrink-0 cursor-pointer" for="part-detail-is_universal">
+                  <input id="part-detail-is_universal" aria-label="Compatible con todos los celulares" type="checkbox" role="switch" name="is_universal" [(ngModel)]="form.is_universal" class="sr-only peer" />
+                  <div class="dt-switch-track" aria-hidden="true"></div>
                 </label>
               </div>
 
               <!-- Specific Phone Models (if not universal) -->
               @if (!form.is_universal) {
                 <div class="p-3.5 bg-white border-2 border-black rounded-lg">
-                  <label class="block text-xs font-black uppercase text-black mb-1">Modelos vinculados</label>
+                  <label for="part-detail-deviceQuery" class="block text-xs font-black uppercase text-black mb-1">Modelos vinculados</label>
                   <p class="text-[11px] font-bold text-black/60 mb-2">Busca y asocia los celulares compatibles.</p>
 
                   <div class="relative mb-2">
-                    <input
+                    <input id="part-detail-deviceQuery" aria-label="Buscar celulares compatibles"
                       name="deviceQuery"
                       [(ngModel)]="deviceQuery"
                       (ngModelChange)="searchDevicesLater()"
@@ -354,7 +371,7 @@ import { IconComponent, ImagePickerComponent } from '../../../shared/components'
                     @for (device of selectedDevices; track device.id) {
                       <div class="nb-badge bg-[#FFE600] gap-1.5 py-1 px-2.5 text-xs font-black">
                         <span>{{ device.brand }} · {{ device.name }}</span>
-                        <button type="button" class="hover:text-red-600 font-black cursor-pointer leading-none flex items-center" (click)="toggleDevice(device)">
+                        <button type="button" class="hover:text-red-600 font-black cursor-pointer leading-none flex items-center" (click)="toggleDevice(device)" aria-label="Cerrar diálogo">
                           <dt-icon name="close" sizeClass="w-3 h-3" />
                         </button>
                       </div>
@@ -388,21 +405,21 @@ import { IconComponent, ImagePickerComponent } from '../../../shared/components'
           <!-- EDITING EXISTING PART: 2-column centered layout with metrics, form, and kardex -->
           <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
             <!-- Left: Form to Edit Specifications -->
-            <div class="lg:col-span-2 nb-card p-5 sm:p-6 rounded-lg">
+            <div class="dt-form-panel lg:col-span-2 nb-card p-5 sm:p-6 rounded-lg">
               <div class="pb-3 border-b-2 border-black mb-4">
                 <h2 class="text-base font-black uppercase text-black">Datos del repuesto</h2>
               </div>
 
               <form (ngSubmit)="save()" class="space-y-4">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="dt-part-fields grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <!-- SKU with Copy -->
                   <div>
                     <div class="flex items-center justify-between mb-1 gap-2">
-                      <label class="block text-xs font-black uppercase text-black">Código SKU</label>
+                      <label class="block text-xs font-black uppercase text-black" for="part-detail-sku">Código SKU</label>
                       @if (form.sku) {
                         <button
                           type="button"
-                          class="nb-btn bg-white hover:bg-[#FFE600] px-1.5 py-0.5 text-[10px] font-mono font-black rounded gap-1"
+                          class="dt-action-secondary nb-btn bg-white hover:bg-[#FFE600] px-1.5 py-0.5 text-[10px] font-mono font-black rounded gap-1"
                           (click)="copySku(form.sku)"
                           title="Copiar SKU"
                         >
@@ -411,7 +428,7 @@ import { IconComponent, ImagePickerComponent } from '../../../shared/components'
                         </button>
                       }
                     </div>
-                    <input
+                    <input id="part-detail-sku" aria-label="Código SKU"
                       name="sku"
                       [(ngModel)]="form.sku"
                       maxlength="64"
@@ -419,22 +436,10 @@ import { IconComponent, ImagePickerComponent } from '../../../shared/components'
                     />
                   </div>
 
-                  <!-- Name -->
-                  <div>
-                    <label class="block text-xs font-black uppercase text-black mb-1">Nombre comercial</label>
-                    <input
-                      name="name"
-                      [(ngModel)]="form.name"
-                      required
-                      maxlength="160"
-                      class="nb-input w-full p-2 text-xs font-bold rounded"
-                    />
-                  </div>
-
                   <!-- Category Combobox -->
                   <div class="category-combobox-wrapper relative">
-                    <div class="flex items-center justify-between mb-1">
-                      <label class="block text-xs font-black uppercase text-black">Categoría</label>
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-1">
+                      <label class="block text-xs font-black uppercase text-black" for="part-detail-category">Categoría</label>
                       <button
                         type="button"
                         (click)="openNewCategoryModal(form.category)"
@@ -446,7 +451,7 @@ import { IconComponent, ImagePickerComponent } from '../../../shared/components'
                       </button>
                     </div>
                     <div class="relative">
-                      <input
+                      <input id="part-detail-category" aria-label="Categoría"
                         type="text"
                         name="category"
                         [(ngModel)]="form.category"
@@ -461,9 +466,9 @@ import { IconComponent, ImagePickerComponent } from '../../../shared/components'
                       />
                       <button
                         type="button"
-                        (click)="categoryDropdownOpen = !categoryDropdownOpen; $event.stopPropagation()"
+                        aria-label="Mostrar categorías" (click)="categoryDropdownOpen = !categoryDropdownOpen; $event.stopPropagation()"
                         tabindex="-1"
-                        class="absolute right-2 top-1/2 -translate-y-1/2 text-black/60 dark:text-neutral-400 hover:text-black dark:hover:text-white p-0.5 cursor-pointer"
+                        class="dt-combobox-toggle absolute right-0 top-1/2 -translate-y-1/2 text-black/60 dark:text-neutral-400 hover:text-black dark:hover:text-white p-0.5 cursor-pointer"
                       >
                         <dt-icon name="chevron-down" sizeClass="w-3.5 h-3.5 transition-transform" [class.rotate-180]="categoryDropdownOpen" />
                       </button>
@@ -504,10 +509,22 @@ import { IconComponent, ImagePickerComponent } from '../../../shared/components'
                     }
                   </div>
 
+                  <!-- Name -->
+                  <div class="sm:col-span-2">
+                    <label class="block text-xs font-black uppercase text-black mb-1" for="part-detail-name">Nombre comercial</label>
+                    <input id="part-detail-name" aria-label="Nombre comercial"
+                      name="name"
+                      [(ngModel)]="form.name"
+                      required
+                      maxlength="160"
+                      class="nb-input w-full p-2 text-xs font-bold rounded"
+                    />
+                  </div>
+
                   <!-- Variant Combobox -->
                   <div class="variant-combobox-wrapper relative">
-                    <div class="flex items-center justify-between mb-1">
-                      <label class="block text-xs font-black uppercase text-black">Variante / Calidad</label>
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-1">
+                      <label class="block text-xs font-black uppercase text-black" for="part-detail-variant">Variante / Calidad</label>
                       <button
                         type="button"
                         (click)="openNewVariantModal(form.variant)"
@@ -519,7 +536,7 @@ import { IconComponent, ImagePickerComponent } from '../../../shared/components'
                       </button>
                     </div>
                     <div class="relative">
-                      <input
+                      <input id="part-detail-variant" aria-label="Variante o calidad"
                         type="text"
                         name="variant"
                         [(ngModel)]="form.variant"
@@ -533,9 +550,9 @@ import { IconComponent, ImagePickerComponent } from '../../../shared/components'
                       />
                       <button
                         type="button"
-                        (click)="variantDropdownOpen = !variantDropdownOpen; $event.stopPropagation()"
+                        aria-label="Mostrar variantes" (click)="variantDropdownOpen = !variantDropdownOpen; $event.stopPropagation()"
                         tabindex="-1"
-                        class="absolute right-2 top-1/2 -translate-y-1/2 text-black/60 dark:text-neutral-400 hover:text-black dark:hover:text-white p-0.5 cursor-pointer"
+                        class="dt-combobox-toggle absolute right-0 top-1/2 -translate-y-1/2 text-black/60 dark:text-neutral-400 hover:text-black dark:hover:text-white p-0.5 cursor-pointer"
                       >
                         <dt-icon name="chevron-down" sizeClass="w-3.5 h-3.5 transition-transform" [class.rotate-180]="variantDropdownOpen" />
                       </button>
@@ -578,8 +595,8 @@ import { IconComponent, ImagePickerComponent } from '../../../shared/components'
 
                   <!-- Purchase Price -->
                   <div>
-                    <label class="block text-xs font-black uppercase text-black mb-1">Precio Compra (USD)</label>
-                    <input
+                    <label class="block text-xs font-black uppercase text-black mb-1" for="part-detail-purchase">Precio Compra (USD)</label>
+                    <input id="part-detail-purchase" aria-label="Precio de compra (USD)"
                       name="purchase"
                       type="number"
                       min="0"
@@ -592,8 +609,8 @@ import { IconComponent, ImagePickerComponent } from '../../../shared/components'
 
                   <!-- Sale Price -->
                   <div>
-                    <label class="block text-xs font-black uppercase text-black mb-1">Precio Venta (USD)</label>
-                    <input
+                    <label class="block text-xs font-black uppercase text-black mb-1" for="part-detail-sale">Precio Venta (USD)</label>
+                    <input id="part-detail-sale" aria-label="Precio de venta (USD)"
                       name="sale"
                       type="number"
                       min="0"
@@ -606,8 +623,8 @@ import { IconComponent, ImagePickerComponent } from '../../../shared/components'
 
                   <!-- Minimum Stock -->
                   <div>
-                    <label class="block text-xs font-black uppercase text-black mb-1">Stock Mínimo</label>
-                    <input
+                    <label class="block text-xs font-black uppercase text-black mb-1" for="part-detail-minimum">Stock Mínimo</label>
+                    <input id="part-detail-minimum" aria-label="Stock mínimo"
                       name="minimum"
                       type="number"
                       min="0"
@@ -627,20 +644,20 @@ import { IconComponent, ImagePickerComponent } from '../../../shared/components'
                       Compatible con cualquier celular o consumible general de taller.
                     </p>
                   </div>
-                  <label class="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" name="is_universal" [(ngModel)]="form.is_universal" class="sr-only peer" />
-                    <div class="w-11 h-6 bg-neutral-200 border-2 border-black rounded-full peer peer-checked:bg-[#FFE600] after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-black after:border after:border-black after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full"></div>
+                  <label class="relative inline-flex items-center justify-center min-h-11 shrink-0 cursor-pointer" for="part-detail-is_universal">
+                    <input id="part-detail-is_universal" aria-label="Compatible con todos los celulares" type="checkbox" role="switch" name="is_universal" [(ngModel)]="form.is_universal" class="sr-only peer" />
+                    <div class="dt-switch-track" aria-hidden="true"></div>
                   </label>
                 </div>
 
                 <!-- Specific Phone Models -->
                 @if (!form.is_universal) {
                   <div class="p-3.5 bg-white border-2 border-black rounded-lg">
-                    <label class="block text-xs font-black uppercase text-black mb-1">Modelos vinculados</label>
+                    <label for="part-detail-deviceQuery" class="block text-xs font-black uppercase text-black mb-1">Modelos vinculados</label>
                     <p class="text-[11px] font-bold text-black/60 mb-2">Busca y asocia celulares compatibles.</p>
 
                     <div class="relative mb-2">
-                      <input
+                      <input id="part-detail-deviceQuery" aria-label="Buscar celulares compatibles"
                         name="deviceQuery"
                         [(ngModel)]="deviceQuery"
                         (ngModelChange)="searchDevicesLater()"
@@ -671,7 +688,7 @@ import { IconComponent, ImagePickerComponent } from '../../../shared/components'
                       @for (device of selectedDevices; track device.id) {
                         <div class="nb-badge bg-[#FFE600] gap-1.5 py-1 px-2.5 text-xs font-black">
                           <span>{{ device.brand }} · {{ device.name }}</span>
-                          <button type="button" class="hover:text-red-600 font-black cursor-pointer leading-none flex items-center" (click)="toggleDevice(device)">
+                          <button type="button" class="hover:text-red-600 font-black cursor-pointer leading-none flex items-center" (click)="toggleDevice(device)" aria-label="Cerrar diálogo">
                             <dt-icon name="close" sizeClass="w-3 h-3" />
                           </button>
                         </div>
@@ -743,8 +760,8 @@ import { IconComponent, ImagePickerComponent } from '../../../shared/components'
 
                   <form (ngSubmit)="saveMovement()" class="space-y-3">
                     <div>
-                      <label class="block text-[11px] font-black uppercase text-black mb-1">Acción</label>
-                      <select name="kind" [(ngModel)]="movement.kind" class="nb-input w-full p-2 text-xs rounded font-bold">
+                      <label class="block text-[11px] font-black uppercase text-black mb-1" for="part-detail-kind">Acción</label>
+                      <select id="part-detail-kind" aria-label="Tipo de movimiento" name="kind" [(ngModel)]="movement.kind" class="nb-input w-full p-2 text-xs rounded font-bold">
                         <option value="entry">Entrada (+) Compra</option>
                         <option value="exit">Salida (-) Uso en reparación</option>
                         <option value="adjustment">Ajuste de inventario físico</option>
@@ -753,14 +770,14 @@ import { IconComponent, ImagePickerComponent } from '../../../shared/components'
 
                     @if (movement.kind === 'adjustment') {
                       <div>
-                        <label class="block text-[11px] font-black uppercase text-black mb-1">Existencia real verificada</label>
-                        <input name="target" type="number" min="0" step="1" [(ngModel)]="movement.target" required class="nb-input w-full p-2 text-xs font-mono font-bold rounded" />
+                        <label class="block text-[11px] font-black uppercase text-black mb-1" for="part-detail-target">Existencia real verificada</label>
+                        <input id="part-detail-target" aria-label="Stock final contado" name="target" type="number" min="0" step="1" [(ngModel)]="movement.target" required class="nb-input w-full p-2 text-xs font-mono font-bold rounded" />
                       </div>
                     } @else {
                       <div>
-                        <div class="flex items-center justify-between mb-1">
-                          <label class="block text-[11px] font-black uppercase text-black">Cantidad</label>
-                          <div class="flex items-center gap-1">
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-1">
+                          <label class="block text-[11px] font-black uppercase text-black" for="part-detail-quantity">Cantidad</label>
+                          <div class="flex flex-wrap items-center gap-1">
                             @for (q of [1, 2, 5, 10]; track q) {
                               <button
                                 type="button"
@@ -774,13 +791,13 @@ import { IconComponent, ImagePickerComponent } from '../../../shared/components'
                             }
                           </div>
                         </div>
-                        <input name="quantity" type="number" min="1" step="1" [(ngModel)]="movement.quantity" required class="nb-input w-full p-2 text-xs font-mono font-bold rounded" />
+                        <input id="part-detail-quantity" aria-label="Cantidad" name="quantity" type="number" min="1" step="1" [(ngModel)]="movement.quantity" required class="nb-input w-full p-2 text-xs font-mono font-bold rounded" />
                       </div>
                     }
 
                     <div>
-                      <label class="block text-[11px] font-black uppercase text-black mb-1">Motivo / Justificación</label>
-                      <input name="reason" [(ngModel)]="movement.reason" required maxlength="255" placeholder="Reparación #1042..." class="nb-input w-full p-2 text-xs rounded" />
+                      <label class="block text-[11px] font-black uppercase text-black mb-1" for="part-detail-reason">Motivo / Justificación</label>
+                      <input id="part-detail-reason" aria-label="Motivo del movimiento" name="reason" [(ngModel)]="movement.reason" required maxlength="255" placeholder="Reparación #1042..." class="nb-input w-full p-2 text-xs rounded" />
                       <div class="flex flex-wrap gap-1 mt-1">
                         @for (r of movement.kind === 'exit' ? ['Reparación', 'Garantía', 'Venta directa'] : movement.kind === 'entry' ? ['Compra distribuidor', 'Devolución'] : ['Recuento físico', 'Ajuste inicial']; track r) {
                           <button
@@ -845,12 +862,12 @@ import { IconComponent, ImagePickerComponent } from '../../../shared/components'
     <!-- MODAL: Crear Nueva Categoría -->
     @if (isCategoryModalOpen) {
       <div
-        class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-in fade-in"
+        class="dt-modal-overlay fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-in fade-in"
         (click)="closeCategoryModal()"
         (wheel)="$event.stopPropagation(); $event.preventDefault()"
         (touchmove)="$event.stopPropagation(); $event.preventDefault()"
       >
-        <div class="bg-white dark:bg-[#1A1D24] border-[3.5px] border-black nb-shadow-xl p-6 rounded-lg max-w-md w-full relative" (click)="$event.stopPropagation()">
+        <div dtDialogSurface (dtDismiss)="closeCategoryModal()" class="bg-white dark:bg-[#1A1D24] border-[3.5px] border-black nb-shadow-xl p-6 rounded-lg max-w-md w-full relative" (click)="$event.stopPropagation()">
           <div class="flex justify-between items-start pb-3 border-b-2 border-black dark:border-neutral-700 mb-4">
             <div>
               <div class="inline-block nb-badge bg-[#FFE600] text-black uppercase text-[9px] font-black mb-1">
@@ -858,7 +875,7 @@ import { IconComponent, ImagePickerComponent } from '../../../shared/components'
               </div>
               <h3 class="font-black text-lg text-black leading-tight">Nueva Categoría de Repuesto</h3>
             </div>
-            <button type="button" class="nb-btn bg-white hover:bg-neutral-100 text-black w-7 h-7 rounded p-0 flex items-center justify-center cursor-pointer" (click)="closeCategoryModal()">
+            <button type="button" class="nb-btn bg-white hover:bg-neutral-100 text-black w-7 h-7 rounded p-0 flex items-center justify-center cursor-pointer" (click)="closeCategoryModal()" aria-label="Cerrar diálogo">
               <dt-icon name="close" sizeClass="w-3.5 h-3.5" />
             </button>
           </div>
@@ -871,8 +888,8 @@ import { IconComponent, ImagePickerComponent } from '../../../shared/components'
             }
 
             <div>
-              <label class="block text-xs font-black uppercase text-black mb-1">Nombre de la Categoría</label>
-              <input
+              <label class="block text-xs font-black uppercase text-black mb-1" for="part-detail-newCategoryName">Nombre de la Categoría</label>
+              <input id="part-detail-newCategoryName" aria-label="Nombre de la categoría"
                 type="text"
                 name="newCategoryName"
                 [(ngModel)]="newCategoryName"
@@ -908,15 +925,58 @@ import { IconComponent, ImagePickerComponent } from '../../../shared/components'
       </div>
     }
 
+    <ng-template #matchingPartsList>
+      <ul class="space-y-2">
+        @for (match of nameMatches; track match.id) {
+          <li class="nb-card bg-white rounded-md p-3 flex flex-wrap items-center justify-between gap-2">
+            <div class="min-w-0">
+              <strong class="block text-xs font-black">{{ match.name }}</strong>
+              <p class="text-xs font-bold">{{ match.variant || 'Sin calidad indicada' }} · {{ match.category }}</p>
+              <p class="text-xs font-mono font-bold">{{ match.sku }}{{ match.archived ? ' · Archivado' : '' }}</p>
+              @if (sameQuality(match)) { <span class="nb-badge bg-[#FFE600] text-xs mt-1">Misma calidad</span> }
+            </div>
+            <a [routerLink]="['/parts', match.id]" (click)="closeDuplicateConfirm()"
+              class="nb-btn bg-white px-3 py-1 text-xs rounded no-underline" [attr.aria-label]="'Ver registro ' + match.sku">Ver registro</a>
+          </li>
+        }
+      </ul>
+      @if (nameMatches.length < nameMatchesTotal) {
+        <button type="button" class="nb-btn bg-white px-3 py-1 text-xs rounded mt-2" [disabled]="checkingName"
+          (click)="refreshNameMatches(nameMatchesPage + 1)">Ver más coincidencias ({{ nameMatches.length }} de {{ nameMatchesTotal }})</button>
+      }
+    </ng-template>
+
+    @if (showDuplicateConfirm) {
+      <div class="dt-modal-overlay fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4"
+        (click)="closeDuplicateConfirm()"
+        (wheel)="$event.stopPropagation(); $event.preventDefault()"
+        (touchmove)="$event.stopPropagation(); $event.preventDefault()">
+        <div dtDialogSurface (dtDismiss)="closeDuplicateConfirm()"
+          class="nb-card bg-white rounded-lg p-5 max-w-xl w-full" (click)="$event.stopPropagation()">
+          <div class="flex items-start justify-between gap-3 mb-3">
+            <h2 class="text-xl font-black">{{ nameMatchesTotal ? 'Este nombre ya está registrado' : 'No se pudo revisar el nombre' }}</h2>
+            <button type="button" class="nb-btn bg-white rounded px-2" aria-label="Cerrar revisión" (click)="closeDuplicateConfirm()"><dt-icon name="close" sizeClass="w-4 h-4" /></button>
+          </div>
+          <p class="text-sm font-bold mb-3">{{ nameMatchesTotal ? 'Puedes abrir un registro existente o crear otro repuesto, por ejemplo de otra calidad.' : 'La revisión no está disponible. Puedes volver al formulario o continuar creando el repuesto.' }}</p>
+          <p class="text-sm font-bold mb-3">Nuevo: {{ form.name }} · {{ form.variant || 'Sin calidad indicada' }}</p>
+          <ng-container [ngTemplateOutlet]="matchingPartsList" />
+          <div class="flex flex-wrap justify-end gap-3 mt-4">
+            <button type="button" class="nb-btn bg-white px-3 py-2 text-xs rounded" (click)="closeDuplicateConfirm()">Volver al formulario</button>
+            <button type="button" class="nb-btn bg-[#FFE600] px-3 py-2 text-xs rounded" (click)="confirmDuplicateCreation()">{{ nameMatchesTotal ? 'Crear otro repuesto' : 'Crear de todos modos' }}</button>
+          </div>
+        </div>
+      </div>
+    }
+
     <!-- MODAL: Crear Nueva Calidad / Variante -->
     @if (isVariantModalOpen) {
       <div
-        class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-in fade-in"
+        class="dt-modal-overlay fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-in fade-in"
         (click)="closeVariantModal()"
         (wheel)="$event.stopPropagation(); $event.preventDefault()"
         (touchmove)="$event.stopPropagation(); $event.preventDefault()"
       >
-        <div class="bg-white dark:bg-[#1A1D24] border-[3.5px] border-black nb-shadow-xl p-6 rounded-lg max-w-md w-full relative" (click)="$event.stopPropagation()">
+        <div dtDialogSurface (dtDismiss)="closeVariantModal()" class="bg-white dark:bg-[#1A1D24] border-[3.5px] border-black nb-shadow-xl p-6 rounded-lg max-w-md w-full relative" (click)="$event.stopPropagation()">
           <div class="flex justify-between items-start pb-3 border-b-2 border-black dark:border-neutral-700 mb-4">
             <div>
               <div class="inline-block nb-badge bg-[#38BDF8] text-black uppercase text-[9px] font-black mb-1">
@@ -924,7 +984,7 @@ import { IconComponent, ImagePickerComponent } from '../../../shared/components'
               </div>
               <h3 class="font-black text-lg text-black leading-tight">Nueva Calidad / Variante</h3>
             </div>
-            <button type="button" class="nb-btn bg-white hover:bg-neutral-100 text-black w-7 h-7 rounded p-0 flex items-center justify-center cursor-pointer" (click)="closeVariantModal()">
+            <button type="button" class="nb-btn bg-white hover:bg-neutral-100 text-black w-7 h-7 rounded p-0 flex items-center justify-center cursor-pointer" (click)="closeVariantModal()" aria-label="Cerrar diálogo">
               <dt-icon name="close" sizeClass="w-3.5 h-3.5" />
             </button>
           </div>
@@ -937,8 +997,8 @@ import { IconComponent, ImagePickerComponent } from '../../../shared/components'
             }
 
             <div>
-              <label class="block text-xs font-black uppercase text-black mb-1">Calidad o Variante</label>
-              <input
+              <label class="block text-xs font-black uppercase text-black mb-1" for="part-detail-newVariantName">Calidad o Variante</label>
+              <input id="part-detail-newVariantName" aria-label="Calidad o variante"
                 type="text"
                 name="newVariantName"
                 [(ngModel)]="newVariantName"
@@ -1015,6 +1075,16 @@ export class PartDetailComponent implements OnInit, OnDestroy {
 
   selectedPhotoFile: File | null = null;
   selectedPhotoPreview: string | null = null;
+
+  nameMatches: PartNameMatch[] = [];
+  nameMatchesTotal = 0;
+  nameMatchesPage = 1;
+  checkingName = false;
+  nameCheckError = '';
+  showDuplicateConfirm = false;
+  private nameTimer: ReturnType<typeof setTimeout> | null = null;
+  private nameCheckVersion = 0;
+  private destroyed = false;
 
   availableCategories: { id: number; name: string }[] = [];
   availableVariants: { id: number; name: string }[] = [];
@@ -1166,7 +1236,9 @@ export class PartDetailComponent implements OnInit, OnDestroy {
 
   @HostListener('document:keydown.escape')
   handleEscape(): void {
-    if (this.isCategoryModalOpen) {
+    if (this.showDuplicateConfirm) {
+      this.closeDuplicateConfirm();
+    } else if (this.isCategoryModalOpen) {
       this.closeCategoryModal();
     } else if (this.isVariantModalOpen) {
       this.closeVariantModal();
@@ -1209,6 +1281,9 @@ export class PartDetailComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.destroyed = true;
+    this.nameCheckVersion++;
+    if (this.nameTimer) clearTimeout(this.nameTimer);
     this.modalLock.reset();
     if (this.imageUrl) URL.revokeObjectURL(this.imageUrl);
     if (this.selectedPhotoPreview) URL.revokeObjectURL(this.selectedPhotoPreview);
@@ -1309,10 +1384,63 @@ export class PartDetailComponent implements OnInit, OnDestroy {
     }
   }
 
-  async save(): Promise<void> {
+  nameChanged(): void {
+    this.nameCheckVersion++;
+    if (this.nameTimer) clearTimeout(this.nameTimer);
+    this.nameMatches = [];
+    this.nameMatchesTotal = 0;
+    this.nameCheckError = '';
+    this.checkingName = false;
+    if (this.form.name.trim()) this.nameTimer = setTimeout(() => void this.refreshNameMatches(), 350);
+  }
+
+  async refreshNameMatches(page = 1): Promise<boolean> {
+    if (this.nameTimer) clearTimeout(this.nameTimer);
+    const name = this.form.name.trim();
+    const version = ++this.nameCheckVersion;
+    if (!name || this.destroyed) return false;
+    this.checkingName = true;
+    this.nameCheckError = '';
+    this.cdr.markForCheck();
+    try {
+      const result = await this.api.partNameMatches(name, page, this.part?.id);
+      if (version !== this.nameCheckVersion || this.destroyed) return false;
+      this.nameMatches = page === 1 ? result.items : [...this.nameMatches, ...result.items];
+      this.nameMatchesTotal = result.total;
+      this.nameMatchesPage = page;
+      return true;
+    } catch {
+      if (version === this.nameCheckVersion && !this.destroyed) this.nameCheckError = 'No se pudo revisar si hay repuestos con este nombre.';
+      return false;
+    } finally {
+      if (version === this.nameCheckVersion && !this.destroyed) {
+        this.checkingName = false;
+        this.cdr.markForCheck();
+      }
+    }
+  }
+
+  sameQuality(match: PartNameMatch): boolean {
+    const normalize = (text: string) => text.normalize('NFKD').replace(/\p{M}/gu, '').trim().replace(/\s+/g, ' ').toLowerCase();
+    return !!this.form.variant.trim() && normalize(match.variant) === normalize(this.form.variant);
+  }
+
+  closeDuplicateConfirm(): void {
+    if (!this.showDuplicateConfirm) return;
+    this.showDuplicateConfirm = false;
+    this.modalLock.unlock();
+  }
+
+  async confirmDuplicateCreation(): Promise<void> {
+    this.closeDuplicateConfirm();
+    await this.save(true);
+  }
+
+  async save(duplicateReviewed = false): Promise<void> {
+    if (this.saving) return;
     this.error = '';
     this.success = '';
-    const f = this.form;
+    const f = { ...this.form };
     if (
       !f.name.trim() ||
       !f.category.trim() ||
@@ -1326,11 +1454,24 @@ export class PartDetailComponent implements OnInit, OnDestroy {
 
     this.saving = true;
     try {
+      if (!this.part && !duplicateReviewed) {
+        const checked = await this.refreshNameMatches();
+        if (this.destroyed) return;
+        if (JSON.stringify(f) !== JSON.stringify(this.form)) {
+          this.toast.show('El formulario cambió durante la revisión. Comprueba los datos y vuelve a guardar.', 'info');
+          return;
+        }
+        if (this.nameMatchesTotal || !checked) {
+          this.showDuplicateConfirm = true;
+          this.modalLock.lock();
+          return;
+        }
+      }
       let skuToSave = f.sku.trim();
       if (!skuToSave && this.isNew) {
         try {
           skuToSave = await this.api.suggestSku(f.category.trim(), f.name.trim());
-          f.sku = skuToSave;
+          this.form.sku = skuToSave;
         } catch {
           skuToSave = '';
         }
@@ -1367,8 +1508,9 @@ export class PartDetailComponent implements OnInit, OnDestroy {
         this.success = 'Repuesto creado correctamente.';
         this.toast.show(`Repuesto creado con SKU ${created.sku}`, 'success');
       }
-    } catch {
-      this.error = 'No se pudo guardar. Comprueba que el SKU no esté duplicado.';
+    } catch (error) {
+      const message = (error as { error?: { error?: { message?: string } } })?.error?.error?.message;
+      this.error = typeof message === 'string' ? message : 'No se pudo guardar el repuesto. Revisa los datos e intenta nuevamente.';
       this.toast.show('Error al guardar el repuesto', 'error');
     } finally {
       this.saving = false;

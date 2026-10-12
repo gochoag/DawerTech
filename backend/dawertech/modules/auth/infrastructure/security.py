@@ -14,7 +14,8 @@ from dawertech.shared.infrastructure.database import db_session
 
 password_hasher = PasswordHasher()
 ACCESS_MINUTES = 720  # 12 hours to maintain stable persistent sessions
-REFRESH_DAYS = 30
+REFRESH_DAYS = 365
+DEVICE_SESSION_EXPIRY = datetime.max.replace(tzinfo=timezone.utc)
 
 
 def hash_password(password: str) -> str:
@@ -38,7 +39,7 @@ def as_utc(value: datetime) -> datetime:
     return value.replace(tzinfo=timezone.utc) if value.tzinfo is None else value.astimezone(timezone.utc)
 
 
-def issue_tokens(session, user: UserORM) -> dict:
+def issue_tokens(session, user: UserORM, remember_device: bool = False) -> dict:
     now = utc_now()
     try:
         session.execute(
@@ -52,7 +53,7 @@ def issue_tokens(session, user: UserORM) -> dict:
     refresh_session = RefreshSessionORM(
         user_id=user.id,
         token_hash=token_hash(refresh_token),
-        expires_at=now + timedelta(days=REFRESH_DAYS),
+        expires_at=DEVICE_SESSION_EXPIRY if remember_device else now + timedelta(days=REFRESH_DAYS),
     )
     session.add(refresh_session)
     session.flush()

@@ -112,7 +112,7 @@ type CsvPreview = { rows: Record<string, unknown>[]; errors: { row: number; mess
             </div>
 
             @for (issue of preview.errors; track issue.row) {
-              <div class="p-2 bg-[#FFEB3B] text-black border-2 border-black rounded text-xs font-bold my-1">
+              <div class="p-2 bg-[#FFE600] text-black border-2 border-black rounded text-xs font-bold my-1">
                 Fila {{ issue.row }}: {{ issue.message }}
               </div>
             }
