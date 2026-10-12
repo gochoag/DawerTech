@@ -8,6 +8,7 @@ import { IconComponent } from './icon.component';
     @if (!release.native) {
       <a [href]="release.downloadUrl()" target="_blank" rel="noopener noreferrer"
         class="nb-btn bg-[#38BDF8] text-black w-full min-h-12 px-3 py-2 rounded-md no-underline gap-2"
+        [class.compact]="compact"
         [attr.aria-label]="'Descargar APK de DawerTech para Android'" title="Descargar APK para Android">
         <dt-icon name="download" sizeClass="w-5 h-5 shrink-0" />
         @if (!collapsed) {
@@ -24,8 +25,14 @@ import { IconComponent } from './icon.component';
       @if (!collapsed && release.message()) { <p role="status" class="text-xs font-bold mt-2">{{ release.message() }}</p> }
     }
   `,
+  styles: [`
+    .compact { min-height: 3rem !important; padding: .25rem .75rem !important; }
+    .compact strong { line-height: 1.125rem; }
+    .compact span.block { line-height: 1rem; }
+  `],
 })
 export class AppReleaseButtonComponent {
   readonly release = inject(AppReleaseService);
   @Input() collapsed = false;
+  @Input() compact = false;
 }

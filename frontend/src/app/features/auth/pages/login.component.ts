@@ -35,7 +35,7 @@ import { AppUpdateNoticeComponent } from '../../../shared/components/app-update-
       <div class="login-content max-w-5xl w-full flex flex-col lg:flex-row items-center justify-between gap-5 lg:gap-16">
         <!-- Hero Information Text -->
         <div class="text-center lg:text-left max-w-lg">
-          <div class="flex items-center justify-center lg:justify-start gap-3">
+          <div class="login-brand flex items-center justify-center lg:justify-start gap-3">
             <div class="w-12 h-12 bg-[#FFE600] border-[2.5px] border-black rounded-lg flex items-center justify-center nb-shadow shrink-0">
               <img src="assets/dt-mark.svg" alt="" class="w-8 h-8" />
             </div>
@@ -112,7 +112,7 @@ import { AppUpdateNoticeComponent } from '../../../shared/components/app-update-
 
             <button
               type="submit"
-              class="nb-btn bg-[#FFE600] hover:bg-[#FFD700] w-full min-h-12 py-3 rounded-md text-sm font-black mt-2"
+              class="login-primary nb-btn bg-[#FFE600] hover:bg-[#FFD700] w-full rounded-md text-base font-black mt-2"
               [disabled]="loading || !email || !password"
             >
               {{ loading ? 'Iniciando sesión…' : 'Entrar al inventario' }}
@@ -129,7 +129,7 @@ import { AppUpdateNoticeComponent } from '../../../shared/components/app-update-
               [disabled]="loading" type="button" (click)="actions.requestLogout()">Cerrar sesión y usar otra cuenta</button>
           }
           @if (!auth.isNative) {
-            <div class="mt-5 pt-4 border-t-2 border-black/15"><dt-app-release-button /></div>
+            <div class="mt-5 pt-4 border-t-2 border-black/15"><dt-app-release-button [compact]="true" /></div>
           }
           @if (!auth.locked()) {
           <p class="text-xs font-bold text-black/70 text-center mt-4">
@@ -141,10 +141,14 @@ import { AppUpdateNoticeComponent } from '../../../shared/components/app-update-
     </main>
   `,
   styles: [`
-    .login-page { min-height: 100dvh; align-items: flex-start; padding-top: calc(env(safe-area-inset-top, 0px) + 4.5rem); padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px)); }
-    .login-content { margin: auto 0; }
+    .login-page { min-height: 100dvh; align-items: flex-start; padding-inline: clamp(12px, 1rem, 20px); padding-top: calc(env(safe-area-inset-top, 0px) + 4.5rem); padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px)); }
+    .login-content { margin: auto 0; padding: 0; }
+    .login-content > .nb-card { padding: clamp(20px, 5vw, 32px); }
+    .login-brand { flex-wrap: wrap; }
+    .login-brand span { max-width: 100%; overflow-wrap: anywhere; }
     .native .login-content { margin: 0; }
     .nb-input, .nb-btn { border-color: var(--nb-text) !important; }
+    .login-primary { min-height: 4rem !important; padding: .875rem 1rem !important; line-height: 1.5; }
     @media (min-width: 1024px) { .login-page:not(.native) { align-items: center; } .native .login-content { flex-direction: column; max-width: 28rem; gap: 1.25rem; } }
     button:focus-visible, summary:focus-visible { outline: 3px solid var(--nb-text); outline-offset: 4px; }
   `],

@@ -1,6 +1,15 @@
 name: Publicar APK Android
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+      - '!frontend/tests/**'
+      - '!frontend/**/*.md'
+      - '!frontend/.gitignore'
+      - '.github/workflows/android-release.yml'
+      - 'docs/android-release-notes.md'
   workflow_dispatch:
 
 permissions:
@@ -25,11 +34,20 @@ jobs:
       DAWERTECH_APK_DOWNLOAD_URL: ${{ vars.DAWERTECH_APK_DOWNLOAD_URL }}
     steps:
       - uses: actions/checkout@v6
+        with:
+          # Compilar el main mas reciente, tambien al reintentar un workflow antiguo.
+          ref: main
       - uses: actions/setup-node@v7
         with:
           node-version: '26'
           package-manager-cache: false
+      - name: Asignar version automaticamente
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/prepare-ci-release.mjs
       - name: Preparar firma y comprobar API
+        if: steps.version.outputs.publish == 'true'
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -42,29 +60,36 @@ jobs:
           JS
           node scripts/prepare-ci-signing.mjs
       - uses: actions/setup-java@v5
+        if: steps.version.outputs.publish == 'true'
         with:
           distribution: temurin
           java-version: '21'
       - uses: android-actions/setup-android@v3
+        if: steps.version.outputs.publish == 'true'
       - name: Preparar herramientas Android
+        if: steps.version.outputs.publish == 'true'
         run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
       - name: Instalar dependencias
+        if: steps.version.outputs.publish == 'true'
         run: |
           npm install --global pnpm@11.13.1
           pnpm install --frozen-lockfile
       - name: Compilar APK firmado
+        if: steps.version.outputs.publish == 'true'
         run: |
           chmod +x android/gradlew
           pnpm run android:generate
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify apk-release/dawertech-release.apk
       - name: Publicar release
+        if: steps.version.outputs.publish == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASE_VERSION: ${{ steps.version.outputs.version }}
+          RELEASE_CODE: ${{ steps.version.outputs.code }}
+          RELEASE_COMMIT: ${{ steps.version.outputs.commit }}
         run: |
-          version=$(node -p "require('./app-release.json').version")
-          code=$(node -p "require('./app-release.json').versionCode")
-          gh release create "android-v${code}" apk-release/dawertech-release.apk --title "DawerTech ${version}" --notes-file ../docs/android-release-notes.md --draft --target "$GITHUB_SHA" --repo "$GITHUB_REPOSITORY"
-          gh release edit "android-v${code}" --draft=false --latest --repo "$GITHUB_REPOSITORY"
+          gh release create "android-v${RELEASE_CODE}" apk-release/dawertech-release.apk --title "DawerTech ${RELEASE_VERSION}" --notes-file ../docs/android-release-notes.md --draft --target "$RELEASE_COMMIT" --repo "$GITHUB_REPOSITORY"
+          gh release edit "android-v${RELEASE_CODE}" --draft=false --latest --repo "$GITHUB_REPOSITORY"
       - name: Retirar archivos de firma del runner
         if: always()
         run: |

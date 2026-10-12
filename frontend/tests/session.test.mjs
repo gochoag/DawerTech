@@ -20,7 +20,8 @@ const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.Modu
 class HttpClient {}
 class HttpErrorResponse extends Error { constructor(status) { super(`HTTP ${status}`); this.status = status; } }
 
-function harness({ native = true, saved, secure = new Map(), local = new Map(), request = () => of(response) } = {}) {
+function harness({ native = true, saved, secure = new Map(), local = new Map(), request = () => of(response),
+  biometry = async () => ({ isAvailable: false, deviceIsSecure: true }) } = {}) {
   let clock = now;
   if (saved) (native ? secure : local).set(key, JSON.stringify(saved));
   const calls = [];
@@ -44,7 +45,7 @@ function harness({ native = true, saved, secure = new Map(), local = new Map(), 
       if (name === '@capacitor/core') return { Capacitor: { getPlatform: () => native ? 'android' : 'web' } };
       if (name === '@aparajita/capacitor-secure-storage') return { SecureStorage: storage };
       if (name === '@aparajita/capacitor-biometric-auth') return { BiometricAuth: {
-        checkBiometry: async () => ({ isAvailable: false, deviceIsSecure: true }),
+        checkBiometry: biometry,
         authenticate: async options => { prompts.push(options); },
       } };
       if (name === '../config') return { API_BASE_URL: 'endpoint' };
@@ -62,17 +63,110 @@ function savedSession(extra = {}) {
   return { endpoint, token: 'saved-token', user, access_token: token(now + day / 2), last_active_at: now - day, device_lock: false, ...extra };
 }
 
-test('Android saves every login without opting into biometrics and restores after process death', async () => {
+test('Android enables protection at login without prompting, and restores after process death', async () => {
   const h = harness();
   await h.auth.login('admin@example.com', 'example-password');
   assert.equal(h.calls[0].body.remember_device, true);
   assert.ok(h.secure.has(key));
+  assert.equal(JSON.parse(h.secure.get(key)).device_lock, true);
+  assert.equal(h.auth.deviceLockEnabled(), true);
   assert.equal(h.prompts.length, 0);
   const restarted = harness({ secure: h.secure, local: h.local });
   await restarted.auth.initialize();
   assert.equal(restarted.auth.user().id, 1);
   assert.equal(restarted.calls.length, 0);
   assert.equal(restarted.prompts.length, 0);
+});
+
+test('automatic protection supports enrolled biometry as well as device PIN', async () => {
+  const h = harness({ biometry: async () => ({ isAvailable: true, deviceIsSecure: false }) });
+  await h.auth.login('admin@example.com', 'example-password');
+  assert.equal(h.auth.deviceLockEnabled(), true);
+  assert.equal(h.prompts.length, 0);
+});
+
+test('a device without configured credentials or a failed availability check can still log in', async () => {
+  for (const biometry of [async () => ({ isAvailable: false, deviceIsSecure: false }), async () => { throw new Error('Unavailable'); }]) {
+    const h = harness({ biometry });
+    await h.auth.login('admin@example.com', 'example-password');
+    assert.equal(h.auth.deviceLockEnabled(), false);
+    h.advanceTime(8 * day);
+    assert.equal(h.auth.checkInactivity(), false);
+    assert.equal(h.prompts.length, 0);
+    assert.equal(h.auth.user().id, 1);
+  }
+});
+
+test('profile opt-out survives refresh, restart and a later credential login for the same account', async () => {
+  const h = harness();
+  await h.auth.login('admin@example.com', 'example-password');
+  await h.auth.setDeviceLock(false);
+  await h.auth.refresh();
+  assert.equal(JSON.parse(h.secure.get(key)).device_lock, false);
+  const reopened = harness({ secure: h.secure, local: h.local });
+  await reopened.auth.initialize();
+  assert.equal(reopened.auth.deviceLockEnabled(), false);
+  reopened.advanceTime(8 * day);
+  assert.equal(reopened.auth.checkInactivity(), false);
+  await reopened.auth.logout();
+  await reopened.auth.login('admin@example.com', 'example-password');
+  assert.equal(reopened.auth.deviceLockEnabled(), false);
+  assert.equal(reopened.prompts.length, 0);
+});
+
+test('a different account on the same device gets the automatic protection default', async () => {
+  const h = harness();
+  await h.auth.login('admin@example.com', 'example-password');
+  await h.auth.setDeviceLock(false);
+  const other = harness({ local: h.local, request: () => of({ ...response, user: { ...user, id: 2 } }) });
+  await other.auth.login('other@example.com', 'example-password');
+  assert.equal(other.auth.deviceLockEnabled(), true);
+});
+
+test('automatic login protection only locks at seven full inactive days', async () => {
+  const h = harness();
+  await h.auth.login('admin@example.com', 'example-password');
+  h.advanceTime(7 * day - 1);
+  assert.equal(h.auth.checkInactivity(), false);
+  assert.equal(h.prompts.length, 0);
+  h.advanceTime(1);
+  assert.equal(h.auth.checkInactivity(), true);
+  assert.ok(h.secure.has(key));
+  await h.auth.unlockBiometric();
+  assert.equal(h.prompts.length, 1);
+  assert.equal(h.auth.user().id, 1);
+});
+
+test('PC login does not enable Android device protection', async () => {
+  const h = harness({ native: false });
+  await h.auth.login('admin@example.com', 'example-password');
+  assert.equal(h.auth.deviceLockEnabled(), false);
+  assert.equal(JSON.parse(h.local.get(key)).device_lock, false);
+});
+
+test('failed profile persistence restores the previous preference and does not drop the session', async () => {
+  const h = harness();
+  await h.auth.login('admin@example.com', 'example-password');
+  h.storage.setItem = async () => { throw new Error('Storage unavailable'); };
+  await assert.rejects(h.auth.setDeviceLock(false));
+  assert.equal(h.auth.deviceLockEnabled(), true);
+  assert.equal(JSON.parse(h.secure.get(key)).device_lock, true);
+  assert.equal(h.local.has(`dawertech-device-lock:${endpoint}:1`), false);
+  assert.equal(h.auth.user().id, 1);
+});
+
+test('logout during the availability check cannot be undone by completing automatic enrollment', async () => {
+  let started, finish;
+  const checking = new Promise(resolve => { started = resolve; });
+  const h = harness({ biometry: () => { started(); return new Promise(resolve => { finish = resolve; }); } });
+  const login = h.auth.login('admin@example.com', 'example-password');
+  await checking;
+  await h.auth.logout();
+  finish({ isAvailable: true, deviceIsSecure: true });
+  await assert.rejects(login);
+  assert.equal(h.secure.has(key), false);
+  assert.equal(h.auth.user(), null);
+  assert.equal(h.auth.accessToken(), null);
 });
 
 test('closing and reopening before seven days does not ask for biometrics', async () => {

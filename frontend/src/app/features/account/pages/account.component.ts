@@ -26,13 +26,14 @@ import { IconComponent } from '../../../shared/components';
       @if (auth.isNative) {
         <section class="nb-card p-5 sm:p-7 rounded-lg" aria-labelledby="device-lock-heading">
           <h2 id="device-lock-heading" class="text-base font-black text-black mb-3">Acceso en este celular</h2>
-          <p class="text-sm font-bold text-black mb-3">La sesión queda guardada al cerrar la app. Si activas esta protección, solo se pedirá tu huella, rostro o PIN después de 7 días sin usarla.</p>
+          <p class="text-sm font-bold text-black mb-3">La sesión queda guardada al cerrar la app. Esta protección se activa automáticamente al ingresar si Android tiene huella, rostro o PIN disponible. Solo se pedirá desbloquear después de 7 días sin usar la app.</p>
           <p class="text-sm font-bold text-black mb-4">Se usa el PIN de bloqueo de Android y la biometría que tengas configurada en el dispositivo.</p>
           <label class="flex items-center gap-3 min-h-12 text-sm font-bold text-black cursor-pointer">
             <input type="checkbox" class="w-6 h-6 accent-black dark:accent-[#FFE600]" [checked]="auth.deviceLockEnabled()"
               [disabled]="configuringLock" (change)="toggleDeviceLock($event)" />
-            Proteger el acceso después de varios días
+            Proteger el acceso después de 7 días sin usar la app
           </label>
+          <p class="text-xs font-bold text-black mt-2">Puedes desactivarla aquí. Se recordará tu preferencia para esta cuenta en este celular.</p>
           @if (configuringLock) { <p aria-live="polite" class="text-sm font-bold mt-3">Configurando protección…</p> }
           @if (lockMessage) { <p role="status" class="text-sm font-bold text-black mt-3">{{ lockMessage }}</p> }
         </section>

@@ -10,6 +10,7 @@ import { TokenResponse, User } from '../models';
 
 const REFRESH_KEY = 'dawertech-refresh';
 const LOGGED_OUT_KEY = 'dawertech-logged-out';
+const DEVICE_LOCK_PREFERENCE_PREFIX = 'dawertech-device-lock:';
 const INACTIVITY_MS = 7 * 24 * 60 * 60 * 1000;
 
 interface StoredSession {
@@ -118,33 +119,48 @@ export class AuthService {
   }
 
   async login(email: string, password: string): Promise<void> {
-    this.revision++;
+    const revision = ++this.revision;
     const response = await firstValueFrom(this.http.post<TokenResponse>(`${this.baseUrl}/auth/login`, {
       email, password, remember_device: this.isNative,
     }).pipe(timeout(20_000)));
+    if (revision !== this.revision) throw new Error('La sesión cambió durante el ingreso.');
+    await this.checkBiometricLogin();
+    if (revision !== this.revision) throw new Error('La sesión cambió durante el ingreso.');
     this.locked.set(false);
     this.session = null;
-    this.deviceLockEnabled.set(false);
+    this.deviceLockEnabled.set(this.isNative && this.biometricReady() &&
+      localStorage.getItem(this.deviceLockPreferenceKey(response.user.id)) !== 'false');
     await this.useTokens(response);
     localStorage.removeItem(LOGGED_OUT_KEY);
   }
 
   async setDeviceLock(enabled: boolean): Promise<void> {
-    if (!this.isNative || !this.session || this.locked()) throw new Error('No hay sesión activa');
+    if (!this.isNative || !this.session?.user || this.locked()) throw new Error('No hay sesión activa');
+    const revision = this.revision;
     if (enabled) {
       await this.checkBiometricLogin();
       if (!this.biometricReady()) throw new Error('Configura una huella, rostro o PIN de bloqueo en los ajustes de Android.');
       await this.authenticateDevice();
     }
+    if (revision !== this.revision || !this.session?.user) throw new Error('La sesión cambió durante la configuración.');
     const previous = this.session;
+    const preferenceKey = this.deviceLockPreferenceKey(this.session.user.id);
+    const previousPreference = localStorage.getItem(preferenceKey);
+    localStorage.setItem(preferenceKey, String(enabled));
     this.session = { ...previous, device_lock: enabled, last_active_at: Date.now() };
     try {
       await this.persistSession();
       this.deviceLockEnabled.set(enabled);
     } catch (error) {
       this.session = previous;
+      if (previousPreference === null) localStorage.removeItem(preferenceKey);
+      else localStorage.setItem(preferenceKey, previousPreference);
       throw error;
     }
+  }
+
+  private deviceLockPreferenceKey(userId: number): string {
+    return `${DEVICE_LOCK_PREFERENCE_PREFIX}${this.baseUrl.current}:${userId}`;
   }
 
   private async authenticateDevice(): Promise<void> {
@@ -279,7 +295,7 @@ export class AuthService {
       endpoint: this.baseUrl.current, token: response.refresh_token,
       user: response.user, access_token: response.access_token,
       last_active_at: this.session?.last_active_at ?? Date.now(),
-      device_lock: this.session?.device_lock ?? false,
+      device_lock: this.session?.device_lock ?? this.deviceLockEnabled(),
     };
     await this.persistSession();
     if (revision !== this.revision) throw new Error('La sesión cambió durante el guardado');

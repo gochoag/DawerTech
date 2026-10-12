@@ -1,4 +1,4 @@
-DawerTech 1.1.0
+Actualización de DawerTech para Android
 
 - Descarga del APK desde el login y la navegación de la web.
 - Avisos de nuevas versiones en Android y comprobación manual desde el menú.
