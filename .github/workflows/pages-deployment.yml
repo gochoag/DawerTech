@@ -57,10 +57,9 @@ jobs:
           JS
 
       - name: Preparar pnpm
-        uses: pnpm/action-setup@v6
-        with:
-          version: '11.12.0'
-          run_install: false
+        run: |
+          npm install --global pnpm@11.13.1
+          pnpm --version
 
       - name: Instalar dependencias
         working-directory: frontend
