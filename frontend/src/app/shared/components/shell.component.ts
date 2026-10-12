@@ -276,7 +276,8 @@ import { AppUpdateNoticeComponent } from './app-update-notice.component';
           ></div>
           <div dtDialogSurface (dtDismiss)="closeMobileMenu()" class="dt-drawer fixed inset-y-0 left-0 w-72 bg-white border-r-[3.5px] border-black nb-shadow-xl z-50 lg:hidden p-4 flex flex-col justify-between animate-in slide-in-from-left">
             <div>
-              <div class="flex items-center justify-between pb-3 border-b-2 border-black mb-4">
+              <div class="flex items-center justify-between pb-3 border-b-2 border-black mb-4"
+                [class.dt-native-drawer-heading]="auth.isNative">
                 <div class="flex items-center gap-2.5">
                   <div class="w-8 h-8 bg-[#FFE600] border-2 border-black rounded flex items-center justify-center nb-shadow-sm">
                     <img src="assets/dt-mark.svg" alt="" class="w-5 h-5" />
@@ -318,7 +319,8 @@ import { AppUpdateNoticeComponent } from './app-update-notice.component';
               </div>
             </div>
 
-            <div class="border-t-2 border-black pt-3 space-y-2">
+            <div class="border-t-2 border-black pt-3"
+              [class.space-y-2]="!auth.isNative" [class.dt-native-drawer-actions]="auth.isNative">
               <dt-app-release-button />
               <button
                 type="button"
@@ -385,6 +387,14 @@ import { AppUpdateNoticeComponent } from './app-update-notice.component';
 
     </div>
   `,
+  styles: [`
+    .dt-native-drawer-heading { flex-wrap: wrap; gap: .75rem; overflow-wrap: anywhere; }
+    .dt-native-drawer-heading > div, .dt-native-drawer-heading > div > div { min-width: 0; }
+    .dt-native-drawer-actions { display: flex; flex-direction: column; gap: 1rem; overflow-wrap: anywhere; --dt-control-size: 3rem; }
+    .dt-native-drawer-actions > dt-app-release-button { display: block; min-width: 0; }
+    .dt-native-drawer-actions > button > div { min-width: 0; }
+    .dt-native-drawer-actions > button > .nb-badge { flex-shrink: 0; margin-inline-start: .5rem; }
+  `],
 })
 export class ShellComponent implements OnDestroy {
   readonly auth = inject(AuthService);
