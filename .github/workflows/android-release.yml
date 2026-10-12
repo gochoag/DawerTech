@@ -64,8 +64,13 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - uses: android-actions/setup-android@v3
+      - name: Preparar SDK Android
+        uses: android-actions/setup-android@v4.0.4
         if: steps.version.outputs.publish == 'true'
+        with:
+          cmdline-tools-version: '15859902'
+          packages: 'platform-tools'
+          log-accepted-android-sdk-licenses: false
       - name: Preparar herramientas Android
         if: steps.version.outputs.publish == 'true'
         run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0'

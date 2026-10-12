@@ -55,6 +55,8 @@ La versión inicial se define en [`frontend/app-release.json`](../frontend/app-r
 
 La publicación crea el tag `android-vVERSION_CODE`, el título `DawerTech VERSION` y el archivo `dawertech-release.apk`. Primero sube el archivo a una release en borrador; solo después la publica como la última. Un intento incompleto reserva su código y el siguiente intento usa uno nuevo.
 
+El SDK se prepara con `android-actions/setup-android@v4.0.4`, command-line tools `15859902` y el paquete explícito `platform-tools`; después se instalan Android API 36 y build-tools 36.0.0. No uses el antiguo paquete `tools`: Google lo retiró y la configuración predeterminada de `setup-android@v3` falla al intentar instalarlo. Después de corregir un workflow, haz commit y push para ejecutar su nueva configuración; **Re-run jobs** sobre la ejecución antigua conserva el workflow del commit anterior. También puedes usar **Run workflow > main** tras subir el cambio. [Documentación de setup-android](https://github.com/android-actions/setup-android#the-deprecated-tools-package).
+
 Configura una sola vez estos cuatro secretos en **GitHub > Settings > Secrets and variables > Actions > New repository secret**, antes de hacer el push que activa la automatización:
 
 | Secreto | Valor |
