@@ -6,12 +6,14 @@ import { Router } from '@angular/router';
 import { AuthService, ThemeService } from '../../../core/services';
 import { AppActionsService } from '../../../core/services/app-actions.service';
 import { IconComponent } from '../../../shared/components';
+import { AppReleaseButtonComponent } from '../../../shared/components/app-release-button.component';
+import { AppUpdateNoticeComponent } from '../../../shared/components/app-update-notice.component';
 
 @Component({
   standalone: true,
-  imports: [FormsModule, IconComponent],
+  imports: [FormsModule, IconComponent, AppReleaseButtonComponent, AppUpdateNoticeComponent],
   template: `
-    <div class="login-page bg-[#F8F6EE] flex justify-center p-4 relative" [class.native]="auth.isNative">
+    <main class="login-page bg-[#F8F6EE] flex justify-center p-4 relative" [class.native]="auth.isNative">
       <!-- Top Right Theme Toggle -->
       <div class="absolute top-4 right-4 z-20">
         <button
@@ -35,7 +37,7 @@ import { IconComponent } from '../../../shared/components';
         <div class="text-center lg:text-left max-w-lg">
           <div class="flex items-center justify-center lg:justify-start gap-3">
             <div class="w-12 h-12 bg-[#FFE600] border-[2.5px] border-black rounded-lg flex items-center justify-center nb-shadow shrink-0">
-              <img src="assets/dt-mark.svg" alt="DawerTech" class="w-8 h-8" />
+              <img src="assets/dt-mark.svg" alt="" class="w-8 h-8" />
             </div>
             <span class="text-3xl font-black tracking-tight text-black">DawerTech</span>
           </div>
@@ -54,6 +56,7 @@ import { IconComponent } from '../../../shared/components';
 
         <!-- Login Card -->
         <div class="nb-card w-full max-w-md p-5 sm:p-8 rounded-xl">
+          <dt-app-update-notice />
           <div class="mb-5 pb-3 border-b-2 border-black">
             <h2 class="text-xl font-black text-black uppercase">{{ auth.locked() ? 'Desbloquear sesión' : 'Iniciar sesión' }}</h2>
             <p class="text-sm font-bold text-black/70 mt-1">{{ auth.locked() ? 'Tu sesión sigue guardada.' : 'Ingresa con tu cuenta del taller.' }}</p>
@@ -125,6 +128,9 @@ import { IconComponent } from '../../../shared/components';
             <button class="nb-btn bg-white w-full min-h-12 mt-4 text-sm font-black rounded-md"
               [disabled]="loading" type="button" (click)="actions.requestLogout()">Cerrar sesión y usar otra cuenta</button>
           }
+          @if (!auth.isNative) {
+            <div class="mt-5 pt-4 border-t-2 border-black/15"><dt-app-release-button /></div>
+          }
           @if (!auth.locked()) {
           <p class="text-xs font-bold text-black/70 text-center mt-4">
             ¿Olvidaste tu contraseña? Solicita al administrador restablecerla desde el panel de usuarios.
@@ -132,7 +138,7 @@ import { IconComponent } from '../../../shared/components';
           }
         </div>
       </div>
-    </div>
+    </main>
   `,
   styles: [`
     .login-page { min-height: 100dvh; align-items: flex-start; padding-top: calc(env(safe-area-inset-top, 0px) + 4.5rem); padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px)); }

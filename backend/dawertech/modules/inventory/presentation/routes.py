@@ -299,11 +299,14 @@ def upload_image(part_id: int):
                 raise ApiProblem("not_found", "Repuesto no encontrado", 404)
             previous = part.image_name
             part.image_name = image_name
-        if previous:
-            storage.delete_image(previous)
     except Exception:
         storage.delete_image(image_name)
         raise
+    if previous:
+        try:
+            storage.delete_image(previous)
+        except OSError:
+            current_app.logger.warning('No se pudo retirar una foto reemplazada; revisar limpiar-imagenes.')
     return {"has_image": True}
 
 

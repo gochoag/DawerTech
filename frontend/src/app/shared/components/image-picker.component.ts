@@ -114,6 +114,7 @@ import { DialogSurfaceDirective } from './dialog-surface.directive';
       @if (feedback) {
         <p role="status" class="mt-2 text-xs font-bold text-red-700 dark:text-red-300">{{ feedback }}</p>
       }
+      <p class="mt-2 text-xs font-bold">Optimizamos las fotos para ahorrar espacio.</p>
 
       <!-- Hidden Native File Inputs -->
       <!-- PC and Mobile Gallery explorer -->

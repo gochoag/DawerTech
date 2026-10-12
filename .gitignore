@@ -12,6 +12,8 @@
 *.db
 media/
 **/media/
+backups/
+**/backups/
 
 # Build artifacts & packages
 *.apk

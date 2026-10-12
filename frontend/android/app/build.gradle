@@ -1,5 +1,7 @@
 apply plugin: 'com.android.application'
 
+def appRelease = new groovy.json.JsonSlurper().parse(rootProject.file('../app-release.json'))
+
 def signingProperties = new Properties()
 def signingPropertiesFile = rootProject.file('key.properties')
 if (signingPropertiesFile.exists()) {
@@ -13,8 +15,8 @@ android {
         applicationId "com.dawertech.inventory"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode appRelease.versionCode as int
+        versionName appRelease.version
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

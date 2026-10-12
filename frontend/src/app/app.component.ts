@@ -6,6 +6,7 @@ import { PluginListenerHandle } from '@capacitor/core';
 
 import { AuthService, ModalLockService } from './core/services';
 import { AppActionsService } from './core/services/app-actions.service';
+import { AppReleaseService } from './core/services/app-release.service';
 
 @Component({
   selector: 'dt-root',
@@ -49,6 +50,7 @@ import { AppActionsService } from './core/services/app-actions.service';
 export class AppComponent implements OnInit, OnDestroy {
   readonly auth = inject(AuthService);
   readonly actions = inject(AppActionsService);
+  readonly releases = inject(AppReleaseService);
   readonly busy = signal(false);
   readonly error = signal('');
   private readonly router = inject(Router);
@@ -57,6 +59,7 @@ export class AppComponent implements OnInit, OnDestroy {
   private listeners: PluginListenerHandle[] = [];
   private destroyed = false;
   private modalIsLocked = false;
+  private updateTimer?: ReturnType<typeof setInterval>;
   private readonly updateViewport = () => {
     const viewport = window.visualViewport;
     document.documentElement.style.setProperty('--dt-viewport-height', `${viewport?.height ?? window.innerHeight}px`);
@@ -91,11 +94,13 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   async ngOnInit(): Promise<void> {
+    void this.releases.initialize();
     this.updateViewport();
     window.visualViewport?.addEventListener('resize', this.updateViewport);
     window.visualViewport?.addEventListener('scroll', this.updateViewport);
     window.addEventListener('resize', this.updateViewport);
     if (!this.auth.isNative) return;
+    this.updateTimer = setInterval(() => { if (!document.hidden) void this.releases.check(); }, 15 * 60 * 1000);
     const listeners = await Promise.all([
       App.addListener('backButton', () => {
         if (this.actions.confirmation()) this.actions.cancel();
@@ -103,6 +108,7 @@ export class AppComponent implements OnInit, OnDestroy {
       }),
       App.addListener('appStateChange', ({ isActive }) => {
         if (isActive) {
+          void this.releases.check();
           if (!this.auth.checkInactivity()) {
             void this.auth.recordActivity(true).catch(() => {});
             void this.auth.ensureActiveToken().catch(() => {});
@@ -142,6 +148,7 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    if (this.updateTimer) clearInterval(this.updateTimer);
     this.destroyed = true;
     window.visualViewport?.removeEventListener('resize', this.updateViewport);
     window.visualViewport?.removeEventListener('scroll', this.updateViewport);

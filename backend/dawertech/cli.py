@@ -1,6 +1,7 @@
 import getpass
 import shutil
 import sqlite3
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -11,10 +12,35 @@ from sqlalchemy import select
 from dawertech.modules.auth.infrastructure.orm_models import UserORM
 from dawertech.modules.auth.infrastructure.security import hash_password, revoke_user_sessions
 from dawertech.modules.devices.application.device_service import seed_devices
+from dawertech.modules.devices.infrastructure.orm_models import DeviceORM
+from dawertech.modules.inventory.infrastructure.orm_models import PartORM
+from dawertech.shared.infrastructure.local_storage import LocalStorageService
 from dawertech.shared.infrastructure.database import write_session
 
 
 def register_cli(app) -> None:
+    @app.cli.command("estado-almacenamiento", help="Muestra el uso de fotos y su cuota configurada.")
+    def cmd_estado_almacenamiento():
+        storage = LocalStorageService(current_app.config['MEDIA_DIR'])
+        click.echo(f"Fotos: {storage.usage_bytes() / 1024 / 1024:.2f} MiB de {storage.max_quota_bytes / 1024 / 1024:.0f} MiB.")
+
+    @app.cli.command("limpiar-imagenes", help="Revisa fotos sin registro; solo borra si usas --aplicar.")
+    @click.option('--aplicar', is_flag=True, help='Elimina las fotos sin registro de mas de 24 horas.')
+    def cmd_limpiar_imagenes(aplicar: bool):
+        storage = LocalStorageService(current_app.config['MEDIA_DIR'])
+        with current_app.extensions['dawertech_session_factory']() as session:
+            referenced = set(session.scalars(select(PartORM.image_name).where(PartORM.image_name.is_not(None))))
+            referenced.update(session.scalars(select(DeviceORM.image_name).where(DeviceORM.image_name.is_not(None))))
+        candidates = [file for file in storage.upload_dir.glob('*.webp') if file.name not in referenced and file.stat().st_mtime < time.time() - 86400]
+        total = sum(file.stat().st_size for file in candidates)
+        click.echo(f"Fotos sin registro: {len(candidates)} ({total / 1024 / 1024:.2f} MiB).")
+        if aplicar:
+            for file in candidates:
+                storage.delete_image(file.name)
+            click.echo('Limpieza completada.')
+        else:
+            click.echo('No se elimino nada. Haz un respaldo y ejecuta con --aplicar para confirmar.')
+
     def _create_owner(email: str, name: str) -> None:
         email = email.lower().strip()
         name = name.strip()

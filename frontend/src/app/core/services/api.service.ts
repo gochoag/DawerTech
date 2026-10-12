@@ -5,6 +5,7 @@ import { firstValueFrom } from 'rxjs';
 import { API_BASE_URL } from '../config';
 import { Device, Movement, PageResult, Part, PartNameMatch, User } from '../models';
 import { AuthService } from './auth.service';
+import { prepareImageForUpload } from '../http/prepare-image';
 
 export interface Dashboard {
   part_count: number;
@@ -95,9 +96,9 @@ export class ApiService {
     return firstValueFrom(this.http.post<{ movement: Movement; stock: number }>(`${this.baseUrl}/movements`, data));
   }
 
-  uploadImage(partId: number, file: File): Promise<void> {
+  async uploadImage(partId: number, file: File): Promise<void> {
     const form = new FormData();
-    form.append('image', file);
+    form.append('image', await prepareImageForUpload(file));
     return firstValueFrom(this.http.post<void>(`${this.baseUrl}/parts/${partId}/image`, form));
   }
 
@@ -105,9 +106,9 @@ export class ApiService {
     return firstValueFrom(this.http.get(`${this.baseUrl}/parts/${partId}/image`, { responseType: 'blob' }));
   }
 
-  uploadDeviceImage(deviceId: number, file: File): Promise<void> {
+  async uploadDeviceImage(deviceId: number, file: File): Promise<void> {
     const form = new FormData();
-    form.append('image', file);
+    form.append('image', await prepareImageForUpload(file));
     return firstValueFrom(this.http.post<void>(`${this.baseUrl}/devices/${deviceId}/image`, form));
   }
 

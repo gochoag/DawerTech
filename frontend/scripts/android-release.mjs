@@ -20,10 +20,13 @@ console.log('\x1b[33m===========================================================
 
 try {
   ensureAndroidEnv(androidDir);
+  if (!existsSync(join(androidDir, 'key.properties'))) {
+    throw new Error('Configura la firma release antes de generar un APK para distribuir.');
+  }
 
   // 1. Compilar aplicación web
-  run('node scripts/write-config.mjs --android');
   run('npx ng build');
+  run('node scripts/write-config.mjs --android --output-dir=www/browser/assets');
 
   // 2. Sincronizar assets con Capacitor Android
   run('npx cap sync android');
@@ -46,7 +49,8 @@ try {
   }
 
   // Preferir APK firmado 'app-release.apk' o el primero disponible
-  const apkFileName = files.find(f => f === 'app-release.apk') || files[0];
+  const apkFileName = files.find(f => f === 'app-release.apk');
+  if (!apkFileName) throw new Error('No se genero un APK firmado app-release.apk.');
   const sourceApk = join(outputDir, apkFileName);
 
   // 5. Copiar a frontend/apk-release

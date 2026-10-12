@@ -74,11 +74,14 @@ def upload_device_image(device_id: int):
                 raise ApiProblem("not_found", "Celular no encontrado", 404)
             previous = device.image_name
             device.image_name = image_name
-        if previous:
-            storage.delete_image(previous)
     except Exception:
         storage.delete_image(image_name)
         raise
+    if previous:
+        try:
+            storage.delete_image(previous)
+        except OSError:
+            current_app.logger.warning('No se pudo retirar una foto reemplazada; revisar limpiar-imagenes.')
     return {"has_image": True}
 
 

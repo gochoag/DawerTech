@@ -5,11 +5,13 @@ import { AuthService, ModalLockService, ThemeService, ToastService } from '../..
 import { AppActionsService } from '../../core/services/app-actions.service';
 import { IconComponent } from './icon.component';
 import { DialogSurfaceDirective } from './dialog-surface.directive';
+import { AppReleaseButtonComponent } from './app-release-button.component';
+import { AppUpdateNoticeComponent } from './app-update-notice.component';
 
 @Component({
   selector: 'dt-shell',
   standalone: true,
-  imports: [DialogSurfaceDirective, RouterLink, RouterLinkActive, RouterOutlet, IconComponent],
+  imports: [DialogSurfaceDirective, RouterLink, RouterLinkActive, RouterOutlet, IconComponent, AppReleaseButtonComponent, AppUpdateNoticeComponent],
   template: `
     <div class="dt-shell flex flex-col bg-[#F8F6EE] text-black">
       <!-- Top Navbar: Neobrutalist Banner -->
@@ -30,7 +32,7 @@ import { DialogSurfaceDirective } from './dialog-surface.directive';
           <!-- Brand Logo & Name -->
           <a routerLink="/" class="flex items-center gap-2.5 sm:gap-3 text-black no-underline">
             <div class="w-9 h-9 bg-[#FFE600] border-2 border-black rounded-md flex items-center justify-center nb-shadow-sm shrink-0">
-              <img src="assets/dt-mark.svg" alt="DawerTech" class="w-6 h-6" />
+              <img src="assets/dt-mark.svg" alt="" class="w-6 h-6" />
             </div>
             <span class="dt-brand-name text-xl font-black tracking-tight leading-none text-[#2a2f63]">DawerTech</span>
           </a>
@@ -138,6 +140,7 @@ import { DialogSurfaceDirective } from './dialog-surface.directive';
           </div>
         </div>
       </header>
+      <dt-app-update-notice />
 
       <!-- Layout Body -->
       <div class="dt-workspace flex-1 flex min-h-0 relative">
@@ -256,27 +259,9 @@ import { DialogSurfaceDirective } from './dialog-surface.directive';
             </a>
           </div>
 
-          <!-- Bottom Footer Tag: Replaced "Taller Activo" div with useful system status widget -->
+          <!-- Android download and installed-app updates -->
           <div class="border-t-2 border-black/15 pt-3">
-            @if (desktopOpen) {
-              <div class="p-2.5 bg-[#F8F6EE] border-2 border-black rounded-md space-y-1.5 text-xs">
-                <div class="flex items-center justify-between font-black text-[11px] text-black">
-                  <span class="flex items-center gap-1.5">
-                    <span class="w-2 h-2 rounded-full bg-[#16a34a] inline-block animate-pulse"></span>
-                    Sistema operativo
-                  </span>
-                  <span class="text-[10px] font-mono text-black/60 font-bold">v1.2</span>
-                </div>
-                <div class="flex items-center justify-between text-[10px] font-semibold text-black/70 pt-1 border-t border-black/10">
-                  <span>Cerrar modales</span>
-                  <kbd class="px-1.5 py-0.5 bg-white border border-black rounded text-[9px] font-mono font-black">Esc</kbd>
-                </div>
-              </div>
-            } @else {
-              <div class="flex justify-center py-1" title="Sistema v1.2 operativo · Esc para salir">
-                <span class="w-2.5 h-2.5 rounded-full bg-[#16a34a] border border-black inline-block animate-pulse"></span>
-              </div>
-            }
+            <dt-app-release-button [collapsed]="!desktopOpen" />
           </div>
         </aside>
 
@@ -334,6 +319,7 @@ import { DialogSurfaceDirective } from './dialog-surface.directive';
             </div>
 
             <div class="border-t-2 border-black pt-3 space-y-2">
+              <dt-app-release-button />
               <button
                 type="button"
                 class="nb-btn bg-white hover:bg-neutral-100 dark:bg-[#1E2028] text-black w-full py-2 rounded-md text-xs font-black justify-between px-3 cursor-pointer"

@@ -27,6 +27,8 @@ jobs:
     timeout-minutes: 20
     env:
       DAWERTECH_API_URL: ${{ vars.DAWERTECH_API_URL }}
+      DAWERTECH_RELEASE_API_URL: ${{ vars.DAWERTECH_RELEASE_API_URL }}
+      DAWERTECH_APK_DOWNLOAD_URL: ${{ vars.DAWERTECH_APK_DOWNLOAD_URL }}
       CLOUDFLARE_PAGES_PROJECT: ${{ vars.CLOUDFLARE_PAGES_PROJECT || 'dawertech' }}
     steps:
       - name: Descargar codigo

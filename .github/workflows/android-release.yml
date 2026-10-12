@@ -1,0 +1,71 @@
+name: Publicar APK Android
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    defaults:
+      run:
+        working-directory: frontend
+    env:
+      DAWERTECH_API_URL: ${{ vars.DAWERTECH_API_URL }}
+      DAWERTECH_ANDROID_API_URL: ${{ vars.DAWERTECH_API_URL }}
+      DAWERTECH_RELEASE_API_URL: ${{ vars.DAWERTECH_RELEASE_API_URL }}
+      DAWERTECH_APK_DOWNLOAD_URL: ${{ vars.DAWERTECH_APK_DOWNLOAD_URL }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '26'
+          package-manager-cache: false
+      - name: Preparar firma y comprobar API
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          node --input-type=module <<'JS'
+          import { apiUrl } from './scripts/network-config.mjs';
+          if (!process.env.DAWERTECH_API_URL || new URL(apiUrl()).protocol !== 'https:') throw new Error('Configura la URL HTTPS de produccion.');
+          JS
+          node scripts/prepare-ci-signing.mjs
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@v3
+      - name: Preparar herramientas Android
+        run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
+      - name: Instalar dependencias
+        run: |
+          npm install --global pnpm@11.13.1
+          pnpm install --frozen-lockfile
+      - name: Compilar APK firmado
+        run: |
+          chmod +x android/gradlew
+          pnpm run android:generate
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify apk-release/dawertech-release.apk
+      - name: Publicar release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(node -p "require('./app-release.json').version")
+          code=$(node -p "require('./app-release.json').versionCode")
+          gh release create "android-v${code}" apk-release/dawertech-release.apk --title "DawerTech ${version}" --notes-file ../docs/android-release-notes.md --draft --target "$GITHUB_SHA" --repo "$GITHUB_REPOSITORY"
+          gh release edit "android-v${code}" --draft=false --latest --repo "$GITHUB_REPOSITORY"
+      - name: Retirar archivos de firma del runner
+        if: always()
+        run: |
+          rm -f android/key.properties android/signing/release.jks

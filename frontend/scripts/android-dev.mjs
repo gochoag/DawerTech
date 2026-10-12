@@ -49,8 +49,8 @@ try {
   }
 
   // 2. Compilar aplicación web
-  run('node scripts/write-config.mjs --android');
   run('npx ng build');
+  run('node scripts/write-config.mjs --android --output-dir=www/browser/assets');
 
   // 3. Sincronizar assets con Capacitor Android
   run('npx cap sync android');

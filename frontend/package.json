@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "start": "node scripts/write-config.mjs && ng serve --host 0.0.0.0",
-    "build": "node scripts/write-config.mjs && ng build",
-    "build:android": "node scripts/write-config.mjs --android && ng build && cap sync android",
+    "build": "ng build && node scripts/write-config.mjs --output-dir=www/browser/assets",
+    "build:android": "ng build && node scripts/write-config.mjs --android --output-dir=www/browser/assets && cap sync android",
     "android:generate": "node scripts/android-release.mjs",
     "android:dev": "node scripts/android-dev.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.app.json",

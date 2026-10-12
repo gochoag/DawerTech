@@ -34,6 +34,23 @@ Configura el directorio raíz como `frontend`, el comando de compilación `pnpm 
 
 ## Android y APK firmado
 
+La descarga del login y del sidebar de la web utiliza `DAWERTECH_APK_DOWNLOAD_URL`. El APK consulta `DAWERTECH_RELEASE_API_URL`, sin credenciales del inventario, para ofrecer nuevas versiones. Los valores predeterminados apuntan a GitHub Releases de `gochoag/DawerTech`; los binarios se guardan en GitHub y no consumen almacenamiento de PythonAnywhere. Puedes cambiar estas variables públicas en el entorno del frontend y en las variables de GitHub Actions.
+
+La versión se define una sola vez en [`frontend/app-release.json`](../frontend/app-release.json). Gradle y los assets usan esos valores. Para publicar una actualización, incrementa `versionCode` y cambia `version`; actualiza también [`android-release-notes.md`](android-release-notes.md). El tag de GitHub debe ser `android-vVERSION_CODE` (por ejemplo, `android-v2`), el título `DawerTech 1.1.0` y el archivo `dawertech-release.apk`. No marques esa release como borrador o prerelease y márcala como la última. El APK compara el código de versión con `App.getInfo()`, comprueba al abrirse, al retomar y periódicamente mientras está activo, y limita las consultas a una cada 6 horas. **Más tarde** oculta el aviso de esa versión durante 24 horas. El menú permite comprobar manualmente.
+
+Para publicar el APK generado localmente por primera vez, abre **GitHub > Releases > Draft a new release**, configura esos tag y título, adjunta `frontend/apk-release/dawertech-release.apk` y publica. Para automatizar siguientes versiones, configura estos secretos en **Settings > Secrets and variables > Actions**:
+
+| Secreto | Valor |
+| --- | --- |
+| `ANDROID_KEYSTORE_BASE64` | El mismo keystore existente, convertido a Base64 |
+| `ANDROID_KEYSTORE_PASSWORD` | `storePassword` de `frontend/android/key.properties` |
+| `ANDROID_KEY_ALIAS` | `keyAlias` del mismo archivo |
+| `ANDROID_KEY_PASSWORD` | `keyPassword` del mismo archivo |
+
+El campo `storeFile` indica el keystore, con ruta relativa a `frontend/android`. En PowerShell puedes copiar su contenido en Base64 con `[Convert]::ToBase64String([IO.File]::ReadAllBytes("RUTA_DEL_KEYSTORE")) | Set-Clipboard`. Pega el resultado directamente en el secreto de GitHub; no lo agregues al repositorio. Abre **Actions > Publicar APK Android > Run workflow > main**. El workflow genera el APK, comprueba la firma y lo publica con el token de GitHub Actions. Reutiliza la misma clave en todas las versiones; un APK de pruebas firmado con la clave debug no admite actualización directa por un release firmado con otra clave.
+
+La descarga abre el navegador y Android confirma la instalación; el usuario puede tener que autorizar las instalaciones desde ese navegador. La actualización de una release con la misma firma conserva los datos. El comprobador de versiones no elimina ni renueva las credenciales de la sesión. Un cambio del backend local a PythonAnywhere requiere iniciar sesión una vez con la cuenta del servidor nuevo.
+
 Desde `frontend`, ejecuta `pnpm install`, `pnpm run build:android` y genera los iconos con `scripts/generate-android-icons.ps1` si cambias el logo. En Android Studio abre `frontend/android`. El ID es `com.dawertech.inventory`; incrementa `versionCode` y `versionName` en `android/app/build.gradle` en cada actualización.
 
 Para un APK de instalación directa, ejecuta una sola vez `scripts/prepare-release-signing.ps1` en PowerShell. Crea un keystore y `android/key.properties`, ambos ignorados por Git. **Respalda ambos archivos fuera del equipo antes de distribuir el APK**: las actualizaciones deben firmarse con la misma clave. Después, desde `frontend/android`, ejecuta `./gradlew assembleRelease` (Windows: `.\gradlew.bat assembleRelease`). El APK firmado queda en `android/app/build/outputs/apk/release`. También puedes usar Android Studio y el mismo keystore.
@@ -45,6 +62,10 @@ Al primer ingreso en Android usa correo y contraseña. La sesión se guarda siem
 Si cambias la IP del PC, actualiza `DAWERTECH_ANDROID_API_URL` en `frontend/.env` y vuelve a ejecutar `pn android:dev`. Para evitar cambios, configura una reserva DHCP en el router. Los iconos adaptativos usan `dt-app-foreground.svg` con margen para las máscaras de Android; `dt-mark.svg` sigue siendo el logo de la interfaz.
 
 ## Respaldo y restauración
+
+Las fotos se optimizan en el navegador antes del envío y en el servidor al guardarse. El servidor aplica orientación EXIF, elimina metadatos, conserva transparencia y guarda WebP con hasta 1200 px de lado y un máximo de 250 KiB. Usa un nivel de compresión con menor coste de CPU y reduce dimensiones si la imagen supera ese tamaño. La cuota incluye todas las fotos existentes y el nuevo archivo; se configura con `DAWERTECH_MEDIA_QUOTA_MB=100` en el `.env` del backend. Las fotos reemplazadas se eliminan después de confirmar el cambio de registro.
+
+Para consultar el uso, ejecuta `flask estado-almacenamiento`. `flask limpiar-imagenes` revisa WebP sin referencia en repuestos o celulares y con más de 24 horas; no borra nada por defecto. Después de respaldar, `flask limpiar-imagenes --aplicar` elimina esas fotos huérfanas. Las imágenes previas conservan sus archivos; la optimización nueva se aplica a las siguientes subidas. Al desplegar este cambio ejecuta `git pull --ff-only` en PythonAnywhere desde `~/DawerTech` y recarga la web; no necesita migración de esquema.
 
 Haz una copia **diaria manual fuera de PythonAnywhere**, y otra antes de cada migración. En el servidor ejecuta `flask respaldar /home/TU_USUARIO/backups` con las variables de entorno configuradas. Descarga tanto `inventory-*.sqlite3` como `media-*.zip` a un medio independiente y elimina copias antiguas del alojamiento si el espacio escasea.
 
