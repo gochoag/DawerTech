@@ -73,6 +73,8 @@ jobs:
         if: github.event_name == 'workflow_dispatch' && inputs.crear_proyecto
         uses: cloudflare/wrangler-action@v4
         with:
+          packageManager: npm
+          wranglerVersion: '4.149.0'
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages project create ${{ env.CLOUDFLARE_PAGES_PROJECT }} --production-branch=main
@@ -80,6 +82,8 @@ jobs:
       - name: Publicar web
         uses: cloudflare/wrangler-action@v4
         with:
+          packageManager: npm
+          wranglerVersion: '4.149.0'
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy frontend/www/browser --project-name=${{ env.CLOUDFLARE_PAGES_PROJECT }} --branch=main
