@@ -111,7 +111,7 @@ export class AppReleaseService implements OnDestroy {
       try { localStorage.setItem('dt.release-cache', JSON.stringify({ apiUrl: this.config.apiUrl, data, at: this.checkedAt })); } catch {}
       if (force) {
         this.dismissedCode.set(0);
-        this.message.set(this.updateAvailable() ? 'Hay una nueva versión disponible.' : 'Tu app está actualizada.');
+        this.message.set(this.updateAvailable() ? 'Hay una nueva versión disponible.' : '');
       }
     } catch {
       // Reintentar despues de 15 minutos, sin afectar tokens ni bloquear el acceso.

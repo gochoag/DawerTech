@@ -35,7 +35,7 @@ import { AppReleaseService } from './core/services/app-release.service';
             [disabled]="busy()" (click)="actions.cancel()">Cancelar</button>
           <button type="button" class="nb-btn bg-[#FFE600] px-4 min-h-12 rounded-md"
             [disabled]="busy()" (click)="confirm()">
-            {{ busy() ? 'Espera…' : actions.confirmation() === 'logout' ? 'Cerrar sesión' : 'Cerrar app' }}
+            {{ busy() ? 'Espera…' : actions.confirmation() === 'logout' ? 'Cerrar sesión' : 'Cerrar' }}
           </button>
         </div>
       </dialog>
