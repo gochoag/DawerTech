@@ -44,6 +44,7 @@ export class AppReleaseService implements OnDestroy {
   readonly downloadPercent = computed(() => this.downloadBytes() > 0 ? Math.min(100, Math.floor(this.downloadedBytes() / this.downloadBytes() * 100)) : null);
   private readonly dismissedCode = signal(0);
   readonly updateAvailable = computed(() => this.native && !!this.latest() && this.latest()!.versionCode > this.installedCode());
+  readonly isLatest = computed(() => this.native && !this.checking() && this.latest()?.versionCode === this.installedCode());
   readonly showNotice = computed(() => this.updateAvailable() && this.dismissedCode() !== this.latest()!.versionCode);
   readonly downloadUrl = computed(() => this.latest()?.url || this.config.downloadUrl);
   private checkedAt = 0;

@@ -19,15 +19,22 @@ import { ApkDownloadProgressComponent } from './apk-download-progress.component'
       </button>
       @if (!collapsed) { <dt-apk-download-progress /> }
     } @else {
-      <button type="button" class="nb-btn bg-white w-full min-h-12 px-3 py-2 rounded-md gap-2"
-        (click)="release.check(true)" [disabled]="release.checking()" aria-label="Buscar actualizaciones" title="Buscar actualizaciones">
+      <button type="button" class="dt-update-button nb-btn bg-white w-full min-h-12 px-3 py-2 rounded-md gap-2"
+        [class.dt-update-collapsed]="collapsed"
+        (click)="release.check(true)" [disabled]="release.checking()" [attr.aria-label]="collapsed ? 'Buscar actualizaciones' : null" title="Buscar actualizaciones">
         <dt-icon name="refresh" sizeClass="w-5 h-5 shrink-0" />
-        @if (!collapsed) { <span class="text-left min-w-0 text-xs font-black">{{ release.checking() ? 'Comprobando...' : 'Buscar actualizaciones' }}<span class="block font-bold mt-1">v{{ release.installedVersion() }}</span></span> }
+        @if (!collapsed) {
+          <span class="dt-update-label text-left min-w-0 text-xs font-black">{{ release.checking() ? 'Comprobando...' : 'Buscar actualizaciones' }}<span class="block font-bold mt-1">v{{ release.installedVersion() }}</span></span>
+          @if (release.isLatest()) { <span class="nb-badge bg-[#4ADE80] text-black text-xs font-black shrink-0 whitespace-nowrap">Última</span> }
+        }
       </button>
       @if (!collapsed && release.message()) { <p role="status" class="text-xs font-bold mt-2">{{ release.message() }}</p> }
     }
   `,
   styles: [`
+    :host { display: block; min-width: 0; }
+    .dt-update-button:not(.dt-update-collapsed) { justify-content: flex-start; text-align: left; }
+    .dt-update-label { flex: 1; overflow-wrap: anywhere; }
     .compact { min-height: 3rem !important; padding: .25rem .75rem !important; }
     .compact strong { line-height: 1.125rem; }
     .compact span.block { line-height: 1rem; }

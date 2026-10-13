@@ -52,7 +52,10 @@ test('only completed public Android releases with a safe APK are offered', () =>
 });
 
 test('Android offers a newer build and starts the native download with its expected size', async () => {
-  const h = harness(); await h.service.check(true);
+  const h = harness();
+  assert.equal(h.service.isLatest(), false);
+  await h.service.check(true);
+  assert.equal(h.service.isLatest(), false);
   assert.equal(h.service.showNotice(), true);
   await h.service.download();
   assert.equal(h.downloads[0].url, h.service.latest().url);
@@ -60,6 +63,7 @@ test('Android offers a newer build and starts the native download with its expec
   assert.equal(h.service.downloadPhase(), 'downloading');
   const same = harness({ response: () => ({ ok: true, json: async () => data(2) }) });
   await same.service.check(true); assert.equal(same.service.updateAvailable(), false);
+  assert.equal(same.service.isLatest(), true);
 });
 
 test('Later persists the choice and the six-hour cache survives process restarts', async () => {
