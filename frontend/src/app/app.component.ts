@@ -107,6 +107,7 @@ export class AppComponent implements OnInit, OnDestroy {
         else this.actions.requestExit();
       }),
       App.addListener('appStateChange', ({ isActive }) => {
+        this.releases.appStateChanged(isActive);
         if (isActive) {
           void this.releases.check();
           if (!this.auth.checkInactivity()) {

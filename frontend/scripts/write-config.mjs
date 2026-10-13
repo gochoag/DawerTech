@@ -17,6 +17,11 @@ if (!Number.isSafeInteger(release.versionCode) || release.versionCode < 1 || rel
 }
 const releaseApiUrl = process.env.DAWERTECH_RELEASE_API_URL || 'https://api.github.com/repos/gochoag/DawerTech/releases/latest';
 const apkDownloadUrl = process.env.DAWERTECH_APK_DOWNLOAD_URL || 'https://github.com/gochoag/DawerTech/releases/latest/download/dawertech-release.apk';
+const webDownloadUrl = process.env.DAWERTECH_APK_WEB_DOWNLOAD_URL || '/download-apk';
+if (webDownloadUrl !== '/download-apk') {
+  const url = new URL(webDownloadUrl);
+  if (url.protocol !== 'https:' || url.username || url.password) throw new Error('La descarga web del APK debe usar HTTPS.');
+}
 for (const value of [releaseApiUrl, apkDownloadUrl]) {
   const url = new URL(value);
   if (url.protocol !== 'https:' || url.username || url.password) throw new Error('Las URLs de APK y actualizaciones deben usar HTTPS.');
@@ -24,5 +29,5 @@ for (const value of [releaseApiUrl, apkDownloadUrl]) {
 const outputArgument = process.argv.find(argument => argument.startsWith('--output-dir='));
 const assetsDir = resolve(frontendDir, outputArgument?.slice('--output-dir='.length) || 'src/assets');
 mkdirSync(assetsDir, { recursive: true });
-writeFileSync(resolve(assetsDir, 'config.json'), JSON.stringify({ apiBaseUrl, androidApiBaseUrl, useBrowserHost: !process.env.DAWERTECH_API_URL, appRelease: { apiUrl: releaseApiUrl, downloadUrl: apkDownloadUrl, ...release } }));
+writeFileSync(resolve(assetsDir, 'config.json'), JSON.stringify({ apiBaseUrl, androidApiBaseUrl, useBrowserHost: !process.env.DAWERTECH_API_URL, appRelease: { apiUrl: releaseApiUrl, downloadUrl: apkDownloadUrl, webDownloadUrl, ...release } }));
 console.log(`API ${android ? 'Android (red local)' : 'web'}: ${androidApiBaseUrl ?? apiBaseUrl}`);
