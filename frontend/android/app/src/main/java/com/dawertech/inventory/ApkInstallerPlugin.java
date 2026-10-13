@@ -12,6 +12,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.provider.Settings;
+import android.util.Log;
 import androidx.core.content.FileProvider;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
@@ -42,24 +43,40 @@ public class ApkInstallerPlugin extends Plugin {
         worker.execute(() -> {
             try { call.resolve(task.run()); }
             catch (Exception error) {
-                String message = error.getClass() == Exception.class && error.getMessage() != null ? error.getMessage() : "Android no pudo completar la descarga o preparar la instalacion. Intentalo de nuevo.";
+                String message = (error instanceof UpdateFailure || error.getClass() == Exception.class) && error.getMessage() != null ? error.getMessage() : "Android no pudo completar la descarga o preparar la instalacion. Intentalo de nuevo.";
+                String code = error instanceof UpdateFailure ? ((UpdateFailure) error).code : "APK_OPERATION_FAILED";
+                Log.w("DawerTechUpdates", "method=" + call.getMethodName() + " code=" + code);
                 preferences.edit().putString("phase", "error").putString("error", message).putBoolean("auto", false).apply();
-                call.reject(message);
+                call.reject(message, code);
             }
         });
     }
     private interface Task { JSObject run() throws Exception; }
+    private static final class UpdateFailure extends Exception {
+        final String code;
+        UpdateFailure(String code, String message) { super(message); this.code = code; }
+    }
+
+    static long readDownloadSize(PluginCall call) {
+        // El JSON del puente usa Integer para estos bytes (limite 64 MiB).
+        // PluginCall.getLong solo acepta Long y devuelve cero para Integer.
+        return call.getInt("size", 0);
+    }
 
     @PluginMethod public void download(PluginCall call) {
         run(call, () -> {
             Uri uri = Uri.parse(call.getString("url", ""));
             int code = call.getInt("versionCode", 0);
-            long size = call.getLong("size", 0L);
+            long size = readDownloadSize(call);
             String hash = call.getString("sha256", "");
             if (!"https".equals(uri.getScheme()) || uri.getHost() == null || uri.getUserInfo() != null)
-                throw new Exception("La descarga del APK debe usar HTTPS.");
-            if (code <= installedCode() || size <= 0 || size > MAX_BYTES || (!hash.isEmpty() && !hash.matches("[a-f0-9]{64}")))
-                throw new Exception("Los datos de la actualizacion no son validos.");
+                throw new UpdateFailure("APK_INVALID_URL", "La descarga del APK debe usar HTTPS.");
+            if (code <= installedCode())
+                throw new UpdateFailure("APK_NOT_NEWER", "El APK publicado no es mas reciente que la version instalada. Busca actualizaciones de nuevo.");
+            if (size <= 0 || size > MAX_BYTES)
+                throw new UpdateFailure("APK_INVALID_SIZE", "No se recibio un tamaño valido para el APK. Busca actualizaciones de nuevo.");
+            if (!hash.isEmpty() && !hash.matches("[a-f0-9]{64}"))
+                throw new UpdateFailure("APK_INVALID_DIGEST", "Los datos de verificacion del APK no son validos. Busca actualizaciones de nuevo.");
             if (preferences.getInt("code", 0) == code && !"error".equals(preferences.getString("phase", ""))) {
                 if ("deferred".equals(preferences.getString("phase", ""))) preferences.edit().putString("phase", "ready").putBoolean("auto", true).apply();
                 JSObject current = state();

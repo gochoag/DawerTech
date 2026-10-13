@@ -84,6 +84,7 @@ jobs:
         run: |
           chmod +x android/gradlew
           pnpm run android:generate
+          android/gradlew -p android testReleaseUnitTest
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify apk-release/dawertech-release.apk
       - name: Publicar release
         if: steps.version.outputs.publish == 'true'
