@@ -7,7 +7,10 @@ printf '%-16s %-7s %-12s %-10s %s\n' PROYECTO COLOR VERSION SALUD DISCO
 for p in $(proyectos); do
   color="" sha=""
   [ -f "/srv/apps/$p/estado" ] && source "/srv/apps/$p/estado"
-  salud=$(docker inspect -f '{{.State.Health.Status}}' "$p-$color-app-1" 2>/dev/null || echo "-")
+  salud=-
+  if [ -n "$color" ]; then
+    salud=$(docker inspect -f '{{.State.Health.Status}}' "$p-$color-app-1" 2>/dev/null) || salud=caido
+  fi
   disco=$(du -sh "/srv/apps/$p" 2>/dev/null | cut -f1 || echo "-")
   printf '%-16s %-7s %-12s %-10s %s\n' "$p" "${color:--}" "${sha:0:12}" "${salud:--}" "${disco:--}"
 done
