@@ -17,6 +17,7 @@ read -r -a orden <<< "${SSH_ORIGINAL_COMMAND:-$*}"
 
 dir=/srv/apps/$p
 [ -d "$dir" ] || falla "No existe $dir: el admin debe ejecutar vps-new-project $p."
+cd "$dir"  # con sudo -u deploy, la carpeta de quien lo lanza no es legible y docker compose falla
 exec 9>"$dir/.lock"
 flock -n 9 || falla "Ya hay un despliegue de $p en curso."
 
