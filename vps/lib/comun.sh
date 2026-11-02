@@ -3,6 +3,17 @@ INFRA=/opt/vps/infra
 
 falla() { echo "ERROR: $*" >&2; exit 1; }
 
+# aviso <texto>: a Telegram si existe /etc/vps/telegram.env (TELEGRAM_TOKEN y TELEGRAM_CHAT_ID); si no, solo a la salida.
+aviso() {
+  echo "$*"
+  [ -r /etc/vps/telegram.env ] || return 0
+  (
+    source /etc/vps/telegram.env
+    curl -fsS --max-time 10 -o /dev/null "https://api.telegram.org/bot$TELEGRAM_TOKEN/sendMessage" \
+      -d chat_id="$TELEGRAM_CHAT_ID" --data-urlencode text="$*"
+  ) || echo "No se pudo enviar el aviso a Telegram." >&2
+}
+
 nombre_valido() { [[ "$1" =~ ^[a-z][a-z0-9-]{1,30}$ ]] || falla "Proyecto no válido: «$1» (minúsculas, números y -)."; }
 
 # campo <proyecto> <clave[.subclave]> [defecto]: lee projects.yml; una lista sale separada por espacios.

@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# Vigila el servidor cada 5 minutos y avisa por Telegram de lo nuevo y de lo resuelto (paso 10):
+# disco > 85 %, RAM disponible < 15 %, swap > 1 GB dos revisiones seguidas, contenedores unhealthy
+# (los reinicia) o reiniciándose en bucle.
+set -euo pipefail
+source /opt/vps/admin/lib/comun.sh
+[ "$(id -u)" -eq 0 ] || falla "Ejecuta con sudo."
+
+dir=/var/lib/vps-health
+mkdir -p "$dir"
+declare -A problema=()
+
+disco=$(df --output=pcent / | tail -1 | tr -dc 0-9)
+[ "$disco" -le 85 ] || problema[disco]="Disco al $disco % (sudo vps-status; docker system df)"
+
+read -r total disponible < <(awk '/^MemTotal/ {t=$2} /^MemAvailable/ {a=$2} END {print t, a}' /proc/meminfo)
+libre=$((disponible * 100 / total))
+[ "$libre" -ge 15 ] || problema[ram]="RAM disponible al $libre % (sudo vps-status)"
+
+swap_mb=$(free -m | awk '/^Swap/ {print $3}')
+if [ "$swap_mb" -gt 1024 ]; then
+  echo $(( $(cat "$dir/swap" 2>/dev/null || echo 0) + 1 )) > "$dir/swap"
+  [ "$(cat "$dir/swap")" -lt 2 ] || problema[swap]="Swap usada: $swap_mb MB desde hace más de 5 minutos"
+else
+  echo 0 > "$dir/swap"
+fi
+
+for c in $(docker ps --filter health=unhealthy --format '{{.Names}}'); do
+  problema["unhealthy-$c"]="Contenedor $c unhealthy: reiniciado (vps-logs <proyecto>)"
+  docker restart "$c" >/dev/null || true
+done
+for c in $(docker ps -a --filter status=restarting --format '{{.Names}}'); do
+  problema["reinicio-$c"]="Contenedor $c se reinicia en bucle (vps-logs <proyecto>)"
+done
+
+# Avisar solo de lo nuevo y de lo que se resolvió.
+anteriores=$(cat "$dir/activos" 2>/dev/null || true)
+actuales=$(printf '%s\n' "${!problema[@]}" | grep . | sort || true)
+for clave in $(comm -13 <(printf '%s\n' "$anteriores") <(printf '%s\n' "$actuales")); do
+  aviso "ALERTA en $(hostname): ${problema[$clave]}"
+done
+for clave in $(comm -23 <(printf '%s\n' "$anteriores") <(printf '%s\n' "$actuales")); do
+  aviso "Resuelto en $(hostname): $clave"
+done
+printf '%s\n' "$actuales" > "$dir/activos"
