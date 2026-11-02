@@ -1,8 +1,0 @@
-[Unit]
-Description=Actualiza los rangos de Cloudflare en ufw y nginx
-Wants=network-online.target
-After=network-online.target
-
-[Service]
-Type=oneshot
-ExecStart=/opt/vps/admin/bin/vps-cloudflare-ips

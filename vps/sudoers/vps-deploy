@@ -1,3 +1,0 @@
-# deploy solo puede comprobar y recargar nginx (vps-deploy). Se instala con:
-#   sudo install -m 440 /opt/vps/admin/sudoers/vps-deploy /etc/sudoers.d/vps-deploy && sudo visudo -c
-deploy ALL=(root) NOPASSWD: /usr/sbin/nginx -t, /usr/bin/systemctl reload nginx

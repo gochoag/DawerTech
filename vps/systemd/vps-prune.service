@@ -1,8 +1,0 @@
-[Unit]
-Description=Limpieza semanal de imágenes Docker viejas
-Wants=network-online.target docker.service
-After=network-online.target docker.service
-
-[Service]
-Type=oneshot
-ExecStart=/opt/vps/admin/bin/vps-prune

@@ -1,5 +1,0 @@
-#!/usr/bin/env bash
-# Vuelve un proyecto a la versión anterior (o a la indicada). Uso: vps-rollback <proyecto> [sha]
-set -euo pipefail
-[ -n "${1:-}" ] || { echo "Uso: vps-rollback <proyecto> [sha]" >&2; exit 1; }
-exec sudo -u deploy /opt/vps/admin/bin/vps-deploy "$1" rollback ${2:+"$2"}
