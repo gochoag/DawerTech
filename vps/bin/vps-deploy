@@ -1,0 +1,173 @@
+#!/usr/bin/env bash
+# Despliegue sin cortes (azul/verde) de un proyecto (docs/vps/01-configuracion-vps.md, paso 9).
+# GitHub Actions lo ejecuta como «deploy» con comando forzado en authorized_keys:
+#   command="/opt/vps/admin/bin/vps-deploy <proyecto>",restrict ssh-ed25519 ...
+# Órdenes (por SSH_ORIGINAL_COMMAND o como argumentos tras el proyecto):
+#   deploy <sha>      paquete .tar por la entrada estándar: compose.yml, servicios.yml, web/, ghcr-token (opcionales salvo el sha)
+#   rollback [sha]    vuelve a la versión anterior o a la indicada (sin migrar)
+#   status            muestra la versión activa
+set -euo pipefail
+source /opt/vps/admin/lib/comun.sh
+
+p=${1:-}
+shift || true
+nombre_valido "$p"
+[ "$(id -un)" = deploy ] || falla "Se ejecuta como deploy: sudo -u deploy vps-deploy $p <orden>"
+read -r -a orden <<< "${SSH_ORIGINAL_COMMAND:-$*}"
+
+dir=/srv/apps/$p
+[ -d "$dir" ] || falla "No existe $dir: el admin debe ejecutar vps-new-project $p."
+exec 9>"$dir/.lock"
+flock -n 9 || falla "Ya hay un despliegue de $p en curso."
+
+repo=$(campo "$p" repo)
+imagen="ghcr.io/${repo,,}"
+salud=$(campo "$p" salud /health)
+read -r puerto_azul puerto_verde <<< "$(campo "$p" puertos "0 0")"
+color="" sha="" anterior=""
+[ -f "$dir/estado" ] && source "$dir/estado"
+
+tmp=$(mktemp -d)
+trap 'rm -rf "$tmp"' EXIT
+
+registrar() { echo "$(date -u +%FT%TZ) $*" >> "$dir/despliegues.log"; }
+abortar() { registrar "FALLO ${orden[*]}: $*"; falla "$*"; }
+puerto_de() { if [ "$1" = azul ]; then echo "$puerto_azul"; else echo "$puerto_verde"; fi; }
+apagar() {
+  local ids
+  ids=$(docker ps -aq --filter "label=com.docker.compose.project=$p-$1")
+  [ -z "$ids" ] || { docker stop -t 20 $ids >/dev/null; docker rm $ids >/dev/null; }
+}
+compose() {  # compose <color|migrate> <sha> <args...>
+  local c=$1 s=$2
+  shift 2
+  IMAGE="$imagen:$s" HOST_PORT=$(puerto_de "$c") PROYECTO=$p \
+    docker compose -p "$p-$c" -f "$dir/versiones/$s/compose.yml" "$@"
+}
+
+activar() {  # activar <sha> <si|no: migrar>
+  local s=$1 migrar=$2 v="$dir/versiones/$1"
+  local nuevo=azul
+  [ "$color" = azul ] && nuevo=verde
+  local puerto
+  puerto=$(puerto_de "$nuevo")
+  docker network inspect "$p-red" >/dev/null 2>&1 || docker network create "$p-red" >/dev/null
+
+  if [ -f "$v/servicios.yml" ]; then
+    PROYECTO=$p docker compose -p "$p-servicios" -f "$v/servicios.yml" up -d --wait --wait-timeout 120 \
+      || abortar "Los servicios de servicios.yml no arrancaron."
+  fi
+
+  if [ -f "$v/compose.yml" ]; then
+    [ "$puerto" != 0 ] || abortar "$p no tiene puertos en projects.yml."
+    if [ "$migrar" = si ] && compose migrate "$s" --profile migrate config --services | grep -qx migrate; then
+      if [ "$(campo "$p" base ninguna)" = postgres ]; then
+        docker exec postgres pg_dump -U postgres -Fc "$(campo "$p" bd "$p")" > "/srv/backups/$p/pre-$s.dump" \
+          || abortar "No se pudo respaldar la base antes de migrar."
+      fi
+      compose migrate "$s" --profile migrate run --rm migrate \
+        || abortar "La migración falló. La versión anterior sigue sirviendo."
+    fi
+    if ! compose "$nuevo" "$s" up -d --wait --wait-timeout 90 \
+       || ! curl -fsS -o /dev/null --max-time 5 "http://127.0.0.1:$puerto$salud"; then
+      compose "$nuevo" "$s" logs --tail 50 >&2 || true
+      apagar "$nuevo"
+      abortar "La versión nueva no respondió bien en $salud. La anterior sigue sirviendo."
+    fi
+    local up=/etc/nginx/upstreams/$p.conf
+    cp "$up" "$tmp/upstream" 2>/dev/null || true
+    echo "server 127.0.0.1:$puerto;" > "$up.nuevo" && mv -f "$up.nuevo" "$up"
+    if ! sudo -n /usr/sbin/nginx -t >/dev/null 2>&1 || ! sudo -n /usr/bin/systemctl reload nginx; then
+      [ -f "$tmp/upstream" ] && cp "$tmp/upstream" "$up"
+      apagar "$nuevo"
+      abortar "nginx rechazó el cambio. La versión anterior sigue sirviendo."
+    fi
+  fi
+
+  if [ -d "$dir/web/releases/$s" ]; then
+    ln -sfn "releases/$s" "$dir/web/current.nuevo" && mv -Tf "$dir/web/current.nuevo" "$dir/web/current"
+  fi
+
+  if [ -f "$v/compose.yml" ] && [ -n "$color" ] && [ "$color" != "$nuevo" ]; then
+    sleep 10
+    apagar "$color"
+  fi
+  [ -f "$v/compose.yml" ] || nuevo=$color
+  [ "$s" = "$sha" ] || anterior=$sha
+  printf 'color=%s\nsha=%s\nanterior=%s\n' "$nuevo" "$s" "$anterior" > "$dir/estado.nuevo"
+  mv -f "$dir/estado.nuevo" "$dir/estado"
+  registrar "OK ${orden[0]} $s color=${nuevo:-ninguno}"
+
+  # Conserva las 5 últimas versiones (nunca la activa ni la anterior).
+  for carpeta in "$dir/versiones" "$dir/web/releases"; do
+    ls -1t "$carpeta" 2>/dev/null | tail -n +6 | while read -r viejo; do
+      [ "$viejo" = "$s" ] || [ "$viejo" = "$anterior" ] || rm -rf "${carpeta:?}/$viejo"
+    done || true
+  done
+  echo "$p: versión $s activa (${nuevo:-solo web})."
+}
+
+case "${orden[0]:-}" in
+  deploy)
+    s=${orden[1]:-}
+    [[ "$s" =~ ^[0-9a-f]{7,40}$ ]] || abortar "SHA no válido: «$s»."
+    uso=$(df --output=pcent / | tail -1 | tr -dc 0-9)
+    [ "$uso" -le 90 ] || abortar "El disco está al $uso %: libera espacio antes de desplegar (un disco lleno detiene Postgres)."
+
+    cat > "$tmp/paquete.tar"
+    tar -tvf "$tmp/paquete.tar" > "$tmp/lista" || abortar "El paquete no es un .tar válido."
+    if grep -qvE '^[-d]' "$tmp/lista"; then abortar "El paquete tiene enlaces o archivos especiales."; fi
+    tar -tf "$tmp/paquete.tar" | while read -r ruta; do
+      case "$ruta" in
+        /*|*..*) abortar "Ruta no permitida en el paquete: $ruta" ;;
+        compose.yml|servicios.yml|ghcr-token|web/|web/*|./) ;;
+        *) abortar "Archivo no esperado en el paquete: $ruta" ;;
+      esac
+    done
+    mkdir "$tmp/x"
+    tar -xf "$tmp/paquete.tar" -C "$tmp/x" --no-same-owner --no-same-permissions
+    [ -f "$tmp/x/compose.yml" ] || [ -d "$tmp/x/web" ] || abortar "El paquete no trae compose.yml ni web/."
+
+    if [ -f "$tmp/x/compose.yml" ]; then
+      extra=()
+      [ -f "$tmp/x/servicios.yml" ] && extra=("$tmp/x/servicios.yml")
+      "$INFRA/herramientas/vps-check" "$tmp/x/compose.yml" "$p" "${extra[@]}" || abortar "vps-check rechazó el compose."
+      if [ -f "$tmp/x/ghcr-token" ]; then
+        export DOCKER_CONFIG="$tmp/docker"
+        mkdir -p "$DOCKER_CONFIG"
+        docker login ghcr.io -u token --password-stdin < "$tmp/x/ghcr-token" >/dev/null || abortar "El token de GHCR no sirve."
+      fi
+      docker pull -q "$imagen:$s" >/dev/null || abortar "No se pudo descargar $imagen:$s."
+      unset DOCKER_CONFIG
+    fi
+
+    rm -rf "$dir/versiones/$s"
+    mkdir -p "$dir/versiones/$s"
+    for f in compose.yml servicios.yml; do
+      if [ -f "$tmp/x/$f" ]; then cp "$tmp/x/$f" "$dir/versiones/$s/"; fi
+    done
+    if [ -d "$tmp/x/web" ]; then
+      rm -rf "$dir/web/releases/$s"
+      mv "$tmp/x/web" "$dir/web/releases/$s"
+      chmod -R a+rX "$dir/web/releases/$s"
+    fi
+    activar "$s" si
+    ;;
+  rollback)
+    s=${orden[1]:-$anterior}
+    [[ "$s" =~ ^[0-9a-f]{7,40}$ ]] || abortar "No hay versión anterior registrada; indica el sha."
+    [ -d "$dir/versiones/$s" ] || abortar "La versión $s ya no está en el VPS (se guardan las 5 últimas)."
+    if [ -f "$dir/versiones/$s/compose.yml" ]; then
+      docker image inspect "$imagen:$s" >/dev/null 2>&1 || docker pull -q "$imagen:$s" >/dev/null \
+        || abortar "La imagen $imagen:$s ya no está en el VPS ni se pudo descargar."
+    fi
+    activar "$s" no
+    ;;
+  status)
+    echo "$p: color=${color:-ninguno} sha=${sha:-ninguno} anterior=${anterior:-ninguno}"
+    tail -5 "$dir/despliegues.log" 2>/dev/null || true
+    ;;
+  *)
+    falla "Orden no válida. Usa: deploy <sha> | rollback [sha] | status"
+    ;;
+esac
