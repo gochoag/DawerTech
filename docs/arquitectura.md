@@ -10,7 +10,7 @@ El proyecto es un monolito modular para un local y hasta cinco cuentas. Se separ
 | Presentación HTTP | `backend/src/modules/*/presentation/`, `src/shared/presentation/` | Controladores y blueprints modulares (`auth_bp`, `devices_bp`, `inventory_bp`), validación y respuestas JSON |
 | Frontend | `frontend/src/app` | Aplicación Ionic Angular con Tailwind CSS, vista de búsqueda rápida para mostrador y gestión de inventario |
 
-La existencia se obtiene con `SUM(quantity_delta)`, nunca se edita como campo estático. La unidad de trabajo serializa cada escritura SQLite mediante `BEGIN IMMEDIATE`: leer existencia, verificar la regla y registrar el movimiento ocurren en una sola transacción consistente.
+La existencia se obtiene con `SUM(quantity_delta)`, nunca se edita como campo estático. Cada movimiento bloquea la fila del repuesto con `SELECT ... FOR UPDATE` (en SQLite, la unidad de trabajo usa `BEGIN IMMEDIATE`): leer existencia, verificar la regla y registrar el movimiento ocurren en una sola transacción consistente.
 
 Los repuestos soportan tres tipos de afinidad: exclusivos (1 a 1), multimodelo (relación N a M mediante `part_devices`) y universales (`is_universal = True` para insumos de taller o repuestos genéricos que aplican a cualquier teléfono).
 

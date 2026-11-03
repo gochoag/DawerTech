@@ -1,5 +1,6 @@
 import io
-import sqlite3
+import os
+import subprocess
 import zipfile
 from concurrent.futures import ThreadPoolExecutor
 
@@ -13,19 +14,28 @@ from dawertech.modules.auth.infrastructure.orm_models import User
 from dawertech.modules.auth.infrastructure.security import hash_password
 
 
+# Postgres desechable que crea GitHub Actions (D-006). Sin esta variable las pruebas se saltan:
+# nunca se ejecutan contra dawer-bd ni crean bases o archivos SQLite en el PC.
+TEST_DATABASE_URL = os.getenv("DAWERTECH_TEST_DATABASE_URL")
+pytestmark = pytest.mark.skipif(not TEST_DATABASE_URL, reason="Solo en GitHub Actions: falta DAWERTECH_TEST_DATABASE_URL")
+
+
 @pytest.fixture
 def app(tmp_path):
     app = create_app({
         "TESTING": True,
-        "DATABASE_URL": f"sqlite:///{(tmp_path / 'inventory.sqlite3').as_posix()}",
+        "DATABASE_URL": TEST_DATABASE_URL,
         "MEDIA_DIR": str(tmp_path / "media"),
         "SECRET_KEY": "test-secret-key-of-sufficient-length",
     })
-    Base.metadata.create_all(app.extensions["dawertech_engine"])
+    engine = app.extensions["dawertech_engine"]
+    Base.metadata.drop_all(engine)
+    Base.metadata.create_all(engine)
     with app.app_context(), write_session() as session:
         session.add(User(email="owner@example.com", name="Dueño", password_hash=hash_password("owner-password-123"), role="owner"))
     yield app
-    app.extensions["dawertech_engine"].dispose()
+    Base.metadata.drop_all(engine)
+    engine.dispose()
 
 
 def login(client, email="owner@example.com", password="owner-password-123"):
@@ -108,6 +118,15 @@ def test_csv_preview_commit_and_atomic_validation(app):
     assert authorized(client, token, "/api/v1/parts?q=B-1").json["total"] == 0
 
 
+def test_list_parts_returns_connections_to_the_pool(app):
+    # El pool del VPS es pequeño (3+2 por proceso): una sesión sin cerrar lo agota con poca carga.
+    client = app.test_client()
+    token = login(client)["access_token"]
+    for _ in range(10):
+        assert authorized(client, token, "/api/v1/parts?q=dis").status_code == 200
+    assert app.extensions["dawertech_engine"].pool.checkedout() == 0
+
+
 def test_simultaneous_exits_never_make_stock_negative(app):
     client = app.test_client()
     token = login(client)["access_token"]
@@ -144,17 +163,11 @@ def test_backup_restores_data(app, tmp_path):
     destination = tmp_path / "backup"
     result = runner.invoke(args=["respaldar", str(destination)])
     assert result.exit_code == 0, result.output
-    backup = next(destination.glob("*.sqlite3"))
+    backup = next(destination.glob("*.dump"))
     with zipfile.ZipFile(next(destination.glob("*.zip"))) as media:
         assert any(name.endswith(".webp") for name in media.namelist())
-    with sqlite3.connect(backup) as connection:
-        assert connection.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
-        assert connection.execute("SELECT COUNT(*) FROM parts").fetchone()[0] == 1
-        restored = tmp_path / "restored.sqlite3"
-        with sqlite3.connect(restored) as target:
-            connection.backup(target)
-            assert target.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
-            assert target.execute("SELECT COUNT(*) FROM parts").fetchone()[0] == 1
+    contents = subprocess.run(["pg_restore", "--list", str(backup)], capture_output=True, text=True, check=True).stdout
+    assert "TABLE DATA public parts" in contents
 
 
 def test_universal_parts_compatibility_rules(app):

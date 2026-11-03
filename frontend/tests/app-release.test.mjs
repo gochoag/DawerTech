@@ -21,7 +21,7 @@ function harness({ native = true, response = () => ({ ok: true, status: 200, jso
     module, exports: module.exports, URL, Date, Blob, AbortController, setTimeout, clearTimeout, setInterval: () => 1, clearInterval: () => {},
     localStorage: { getItem: key => saved.get(key) || null, setItem: (key, value) => saved.set(key, value) },
     fetch: async (...args) => { requests++; return response(...args); },
-    window: { location: { href: 'https://dawertech.pages.dev/login' } },
+    window: { location: { href: 'https://dawer.cfd/login' } },
     document: { hidden: false, body: { appendChild: () => {} }, createElement: () => {
       const link = { style: {}, remove: () => {}, click: () => downloads.push({ filename: link.download, url: link.href }) }; return link;
     } },
@@ -92,7 +92,7 @@ test('web streams an APK into a download without showing a native installer', as
   const h = harness({ native: false }); await h.service.check(true);
   assert.equal(h.service.updateAvailable(), false);
   await h.service.download();
-  assert.equal(h.webCalls[0][0], 'https://dawertech.pages.dev/download-apk?code=3');
+  assert.equal(h.webCalls[0][0], 'https://dawer.cfd/download-apk?code=3');
   assert.equal(h.downloads[0].filename, 'dawertech-release.apk');
   assert.equal(h.service.downloadPhase(), 'saved');
   assert.equal(h.service.downloadPercent(), 100);

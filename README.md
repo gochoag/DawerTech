@@ -1,6 +1,6 @@
 # DawerTech
 
-Inventario para un taller de reparación de celulares: API Flask/SQLite, web Ionic Angular y app Android Capacitor. La primera versión permite hasta cinco cuentas activas y trabaja en línea con un solo local.
+Inventario para un taller de reparación de celulares: API Flask/PostgreSQL, web Ionic Angular y app Android Capacitor. La primera versión permite hasta cinco cuentas activas y trabaja en línea con un solo local.
 
 ## Estructura
 
@@ -23,6 +23,7 @@ uv run flask run --debug
 ```
 
 > **Sobre la configuración y comandos**:
+> - Requiere PostgreSQL con una base `dawer-bd` creada; pon su usuario y contraseña en `DAWERTECH_DATABASE_URL`.
 > - Las variables se configuran en `backend/.env` (creado a partir de `.env.example`). Si no existe `.env`, la aplicación y las migraciones te pedirán crearlo antes de continuar.
 > - La aplicación Flask se detecta automáticamente (mediante `.flaskenv`), por lo que no necesitas indicar el nombre de la app ni variables adicionales en la consola.
 > - `crear-admin` crea el administrador inicial pidiendo correo, nombre y contraseña en la terminal.
@@ -69,4 +70,8 @@ La sesión web se conserva en el navegador y se renueva por 365 días. Android g
 
 ## Operación
 
-Consulta [arquitectura](docs/arquitectura.md), [API](docs/api.md), [despliegue y respaldos](docs/despliegue.md) y [plan inicial](docs/plan-dawertech.md). No subas claves, bases de datos ni keystores al repositorio.
+Consulta [arquitectura](docs/arquitectura.md), [API](docs/api.md), y [despliegue y respaldos](docs/despliegue.md). No subas claves, bases de datos ni keystores al repositorio.
+
+## Agentes de IA
+
+Las reglas están en `AGENTS.md` y `CLAUDE.md` (idénticos) y las decisiones en [docs/decisiones.md](docs/decisiones.md). El mapa del código usa [Graphify](https://github.com/Graphify-Labs/graphify): instálalo con `uv tool install graphifyy` y genéralo con `graphify update .`.

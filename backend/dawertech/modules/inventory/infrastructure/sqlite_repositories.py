@@ -56,7 +56,8 @@ class SqliteSparePartRepository(SparePartRepository):
         return self.session.get(PartORM, part_id)
 
     def active_part(self, part_id: int) -> PartORM | None:
-        part = self.get_by_id(part_id)
+        # FOR UPDATE: dos movimientos simultáneos del mismo repuesto leen el stock por turnos y no lo dejan negativo.
+        part = self.session.get(PartORM, part_id, with_for_update=True)
         return part if part and not part.archived else None
 
     def stock(self, part_id: int) -> int:

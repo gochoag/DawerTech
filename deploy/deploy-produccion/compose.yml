@@ -1,0 +1,36 @@
+# API de DawerTech en el VPS. IMAGE, HOST_PORT y PROYECTO los pone vps-deploy (azul/verde); no se definen aquí.
+services:
+  app:
+    image: ${IMAGE}
+    user: "10001:10001"
+    env_file: /srv/apps/${PROYECTO}/.env
+    ports:
+      - "127.0.0.1:${HOST_PORT}:8000"
+    read_only: true
+    tmpfs: [/tmp]                 # gunicorn, Pillow y openpyxl usan /tmp
+    pids_limit: 200
+    restart: unless-stopped
+    stop_grace_period: 25s
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    healthcheck:                  # la imagen slim no trae curl ni wget; /health no consulta la base
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2)"]
+      interval: 15s
+      timeout: 3s
+      retries: 3
+      start_period: 30s
+    volumes:
+      - /srv/apps/${PROYECTO}/data/media:/app/media
+    networks: [infra]
+
+  migrate:
+    profiles: ["migrate"]
+    image: ${IMAGE}
+    user: "10001:10001"
+    env_file: /srv/apps/${PROYECTO}/.env
+    command: ["python", "-m", "alembic", "upgrade", "head"]
+    networks: [infra]
+
+networks:
+  infra:
+    external: true

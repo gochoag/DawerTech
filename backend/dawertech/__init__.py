@@ -13,6 +13,7 @@ from dawertech.modules.devices.presentation.routes import devices_bp
 from dawertech.modules.inventory.presentation.routes import inventory_bp
 from dawertech.shared.domain.exceptions import ApiProblem, InventoryRuleError
 from dawertech.shared.infrastructure.database import install_database
+from dawertech.shared.presentation.apk_download import apk_bp
 
 
 def create_app(test_config: dict | None = None) -> Flask:
@@ -65,6 +66,7 @@ def create_app(test_config: dict | None = None) -> Flask:
     app.register_blueprint(auth_bp, url_prefix="/api/v1")
     app.register_blueprint(devices_bp, url_prefix="/api/v1")
     app.register_blueprint(inventory_bp, url_prefix="/api/v1")
+    app.register_blueprint(apk_bp)  # /download-apk, sin prefijo: la web lo pide en su mismo dominio
 
     register_cli(app)
 

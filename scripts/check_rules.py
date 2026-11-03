@@ -3,7 +3,7 @@
 DawerTech Project Rules Enforcement Hook
 ----------------------------------------
 This script acts as an automated verification gate (git hook / CLI validator).
-It ensures strict adherence to all project rules defined in .agents/PROJECT_RULES.md
+It ensures strict adherence to all project rules defined in AGENTS.md / CLAUDE.md
 and docs/reglas_de_desarrollo_y_ux.md:
   1. CERO EMOJIS in code/UI templates/toasts.
   2. MODAL SCROLL LOCK using ModalLockService on all modal-containing components.
@@ -120,23 +120,20 @@ def check_modal_scroll_locks() -> list[str]:
 
 
 def check_single_database() -> list[str]:
-    violations = []
+    # La unica base es PostgreSQL dawer-bd: ningun archivo SQLite en la raiz ni en backend/.
+    return [
+        f"[REGLA 2 - BASE DE DATOS UNICA] Se encontro una base SQLite no autorizada: {f.relative_to(ROOT).as_posix()}. "
+        "La unica base es PostgreSQL dawer-bd (DAWERTECH_DATABASE_URL en backend/.env); guarda las copias antiguas fuera del repositorio."
+        for folder in (ROOT, ROOT / "backend")
+        for f in folder.glob("*.sqlite*")
+    ]
 
-    # 1. Prohibit any sqlite database in the project ROOT
-    for f in ROOT.glob("*.sqlite*"):
-        violations.append(
-            f"[REGLA 2 - BASE DE DATOS UNICA] Se encontro base de datos no autorizada en la raiz del proyecto: {f.name}. La base de datos debe residir exclusivamente en backend/inventory.sqlite3"
-        )
 
-    # 2. Check for unauthorized test databases in backend
-    backend_dir = ROOT / "backend"
-    if backend_dir.exists():
-        for f in backend_dir.glob("*.sqlite*"):
-            if f.name not in {"inventory.sqlite3", "inventory.sqlite3-shm", "inventory.sqlite3-wal"}:
-                violations.append(
-                    f"[REGLA 2 - BASE DE DATOS UNICA] Se encontro base de datos no autorizada en backend: {f.name}. Solo se permite backend/inventory.sqlite3"
-                )
-    return violations
+def check_rule_files_match() -> list[str]:
+    agents, claude = ROOT / "AGENTS.md", ROOT / "CLAUDE.md"
+    if agents.read_bytes() != claude.read_bytes():
+        return ["[ARCHIVOS DE REGLAS] AGENTS.md y CLAUDE.md deben tener el mismo contenido. Copia el cambio de uno al otro."]
+    return []
 
 
 def main() -> int:
@@ -165,7 +162,14 @@ def main() -> int:
     if db_violations:
         all_violations.extend(db_violations)
     else:
-        print("  [OK] Regla 2: Solo base de datos autorizada inventory.sqlite3.")
+        print("  [OK] Regla 2: Sin archivos SQLite; la unica base es PostgreSQL dawer-bd.")
+
+    # 4. Rule files must stay identical
+    rule_file_violations = check_rule_files_match()
+    if rule_file_violations:
+        all_violations.extend(rule_file_violations)
+    else:
+        print("  [OK] AGENTS.md y CLAUDE.md son identicos.")
 
     print("=" * 60)
     if all_violations:

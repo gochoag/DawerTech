@@ -66,7 +66,7 @@ Este documento consolida las reglas, estándares y restricciones obligatorias pa
 * **Git Hook Pre-commit:** Configurado en `.git/hooks/pre-commit`, bloquea automáticamente el commit si detecta:
   1. Emojis en código fuente (`frontend/src` o `backend/dawertech`).
   2. Modales o overlays sin inyección ni invocación de `ModalLockService`.
-  3. Bases de datos SQLite temporales ajenas a `inventory.sqlite3`.
+  3. Archivos de base de datos SQLite en la raíz o en `backend/` (la única base es PostgreSQL `dawer-bd`).
 
 ### 1.5. Responsividad Impecable en Todas las Pantallas
 * **Regla:** Ningún elemento flotante o barra debe superponerse al contenido ni tapar campos de formulario.
@@ -83,8 +83,9 @@ Este documento consolida las reglas, estándares y restricciones obligatorias pa
 ## 2. Reglas del Backend, Pruebas y Manejo de Sesiones
 
 ### 2.1. Un Solo Servidor Backend y Base de Datos Local (Trabajar sobre lo Existente)
-* **Regla:** Se trabaja **directamente sobre el servidor backend en ejecución (`http://localhost:5000`) y la base de datos principal (`backend/inventory.sqlite3`)**.
-* **Prohibición de servidores y BD secundarias:** No crear servidores de backend secundarios en otros puertos (ej. 5001) ni bases de datos SQLite temporales de prueba, para evitar errores de conexión y duplicidad de estado.
+* **Regla:** Se trabaja **directamente sobre el servidor backend en ejecución (`http://localhost:5000`) y la base de datos principal (PostgreSQL `dawer-bd`, configurada en `DAWERTECH_DATABASE_URL` de `backend/.env`)**.
+* **Prohibición de servidores y BD secundarias:** No crear servidores de backend secundarios en otros puertos (ej. 5001) ni bases de datos de prueba (PostgreSQL o SQLite), para evitar errores de conexión y duplicidad de estado.
+* **Excepción `deploy-dev` (D-006):** `deploy/deploy-dev/` puede levantar la API en Docker en el PC del dev (en otro puerto, por ejemplo 8000) a la vez que el backend principal, para probar la imagen de producción. Siempre se conecta a la base local `dawer-bd` (fuera de Docker); no crea bases ni contenedores de Postgres. El VPS no usa esta carpeta.
 * **Credenciales del Administrador Local para Pruebas y Validación:**
   * **Correo:** `admin@local.com`
   * **Contraseña:** `root12345678`
