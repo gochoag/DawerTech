@@ -1,16 +1,14 @@
-from pathlib import Path
-
 import pytest
-from sqlalchemy import create_engine, literal, select, union_all
+from sqlalchemy import literal, select, union_all
 from sqlalchemy.orm import Session
 
 from dawertech.modules.inventory.application import name_matches
 
 
 @pytest.fixture
-def catalog(monkeypatch):
-    database = Path(__file__).resolve().parents[1] / "inventory.sqlite3"
-    engine = create_engine(f"sqlite:///{database.as_uri()}?mode=ro&uri=true")
+def catalog(monkeypatch, motor_solo_lectura):
+    # Base principal en solo lectura: la CTE aporta las filas de estos SELECT; no se crean tablas ni bases.
+    engine = motor_solo_lectura
     # SELECT-only fixtures in the primary database connection; nothing is stored.
     rows = [
         (1, "BAT-001", "Batería Samsung A02", "Original", "Baterías", False),
@@ -38,7 +36,6 @@ def catalog(monkeypatch):
 
     monkeypatch.setattr(name_matches, "db_session", CatalogSession)
     yield
-    engine.dispose()
 
 
 @pytest.mark.parametrize("name", ["Batería Samsung A02", "BATERIA samsung a02", " bateria\t Samsung   A02 ", "Bateri\u0301a Samsung A02"])

@@ -1,0 +1,100 @@
+# Pruebas en cada PR; en cada push a main, además, despliegue sin cortes en el VPS (docs/vps/02-preparar-dawertech.md).
+name: Desplegar
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+    paths-ignore: ['docs/**', '**/*.md']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: desplegar-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  pruebas:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    services:
+      postgres:
+        # Base desechable solo para las pruebas (D-006); desaparece al terminar el job.
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: dawertech_test
+        ports: ["5432:5432"]
+        options: --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 3s --health-retries 10
+    env:
+      DAWERTECH_TEST_DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/dawertech_test
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Reglas del proyecto
+        run: python3 scripts/check_rules.py
+
+      - uses: astral-sh/setup-uv@v6
+
+      - name: Cliente de PostgreSQL 17 (pg_dump y pg_restore para la prueba de respaldo)
+        run: |
+          sudo apt-get install -y -qq postgresql-common >/dev/null
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y >/dev/null
+          sudo apt-get install -y -qq postgresql-client-17 >/dev/null
+          echo "/usr/lib/postgresql/17/bin" >> "$GITHUB_PATH"
+
+      - name: Pruebas del backend
+        working-directory: backend
+        run: |
+          uv sync --frozen
+          uv run pytest -q
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '26'
+          package-manager-cache: false
+
+      - name: Pruebas y compilación del frontend
+        working-directory: frontend
+        env:
+          # La web del VPS siempre habla con esta API (URL pública, no es un secreto).
+          DAWERTECH_API_URL: https://api.dawer.cfd/api/v1
+        run: |
+          npm install --global pnpm@11.13.1
+          pnpm install --frozen-lockfile
+          pnpm run typecheck
+          pnpm run test:session
+          pnpm run build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web
+          path: frontend/www/browser
+          if-no-files-found: error
+
+  vps:
+    needs: pruebas
+    uses: JuanRZAR/infra-vps-tecnomovil/.github/workflows/deploy.yml@v1
+    with:
+      proyecto: dawertech
+      dockerfile: backend/Dockerfile
+      contexto: backend
+      web: web
+      # Solo para arrancar la imagen en la prueba de consumo (sin base real); no son secretos.
+      env_prueba: |
+        DAWERTECH_SECRET_KEY=solo-para-la-prueba-de-consumo-en-ci-0123456789
+        DAWERTECH_DATABASE_URL=postgresql+psycopg://ci:ci@127.0.0.1:1/ci
+        DAWERTECH_MEDIA_DIR=/tmp/media
+      url_salud: https://api.dawer.cfd/health
+      desplegar: ${{ github.event_name != 'pull_request' }}
+    secrets:
+      TS_OAUTH_CLIENT_ID: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+      TS_OAUTH_SECRET: ${{ secrets.TS_OAUTH_SECRET }}
+      VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+      VPS_HOST: ${{ secrets.VPS_HOST }}
+      VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+      TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}

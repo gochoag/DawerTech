@@ -71,6 +71,12 @@ frontend/android/signing/
 # AI Coding Agents & Tooling
 .agents/
 skills-lock.json
+
+# Memoria de cada equipo: la crean y actualizan sus agentes según las reglas
+PROJECT_MEMORY.md
+
+# Mapa del código (Graphify): se regenera en cada equipo
+graphify-out/
 .gemini/
 
 # OS and Editor

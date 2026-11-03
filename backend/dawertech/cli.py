@@ -1,6 +1,8 @@
 import getpass
+import os
 import shutil
 import sqlite3
+import subprocess
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -122,18 +124,32 @@ def register_cli(app) -> None:
 
     def _backup_data(destino: Path) -> None:
         engine = current_app.extensions["dawertech_engine"]
-        if engine.dialect.name != "sqlite":
-            raise click.ClickException("Este respaldo requiere SQLite")
+        if engine.dialect.name not in {"sqlite", "postgresql"}:
+            raise click.ClickException(f"No hay respaldo para la base {engine.dialect.name}")
 
         destino.mkdir(parents=True, exist_ok=True)
         stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
-        database_path = Path(engine.url.database)
-        backup_path = destino / f"inventory-{stamp}.sqlite3"
 
-        with sqlite3.connect(database_path) as source, sqlite3.connect(backup_path) as target:
-            source.backup(target)
-            if target.execute("PRAGMA integrity_check").fetchone()[0] != "ok":
-                raise click.ClickException("Falló la verificación del respaldo")
+        if engine.dialect.name == "postgresql":
+            backup_path = destino / f"inventory-{stamp}.dump"
+            url = engine.url
+            try:
+                result = subprocess.run(
+                    ["pg_dump", "--format=custom", f"--file={backup_path}", f"--host={url.host or 'localhost'}",
+                     f"--port={url.port or 5432}", f"--username={url.username}", url.database],
+                    env={**os.environ, "PGPASSWORD": url.password or ""},
+                    capture_output=True, text=True,
+                )
+            except FileNotFoundError as error:
+                raise click.ClickException("No se encontró pg_dump: añade la carpeta bin de PostgreSQL al PATH") from error
+            if result.returncode != 0:
+                raise click.ClickException(f"Falló pg_dump: {result.stderr.strip()}")
+        else:
+            backup_path = destino / f"inventory-{stamp}.sqlite3"
+            with sqlite3.connect(Path(engine.url.database)) as source, sqlite3.connect(backup_path) as target:
+                source.backup(target)
+                if target.execute("PRAGMA integrity_check").fetchone()[0] != "ok":
+                    raise click.ClickException("Falló la verificación del respaldo")
 
         media_path = Path(current_app.config["MEDIA_DIR"])
         archive_path = shutil.make_archive(str(destino / f"media-{stamp}"), "zip", media_path)
@@ -142,7 +158,7 @@ def register_cli(app) -> None:
         click.echo(f" - Base de datos: {backup_path}")
         click.echo(f" - Archivo de fotos: {archive_path}")
 
-    @app.cli.command("respaldar", help="Crea un respaldo de la base de datos SQLite y fotos.")
+    @app.cli.command("respaldar", help="Crea un respaldo de la base de datos y fotos.")
     @click.argument("destino", type=click.Path(path_type=Path), default="backups", required=False)
     def cmd_respaldar(destino: Path):
         _backup_data(destino)

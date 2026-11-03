@@ -50,14 +50,15 @@ def list_parts():
     search = request.args.get("q", "").strip()[:100]
     device_id = request.args.get("device_id", type=int)
     include_archived = request.args.get("archived") == "true"
-    use_case = SearchCompatibilityUseCase()
-    return use_case.execute(
-        device_id=device_id,
-        search_term=search,
-        include_archived=include_archived,
-        page=page,
-        limit=limit,
-    )
+    # Sesión con `with`: si no, su conexión no vuelve al pool hasta que actúa el recolector de basura.
+    with db_session() as session:
+        return SearchCompatibilityUseCase(SqliteSparePartRepository(session)).execute(
+            device_id=device_id,
+            search_term=search,
+            include_archived=include_archived,
+            page=page,
+            limit=limit,
+        )
 
 
 @inventory_bp.get("/parts/name-matches")

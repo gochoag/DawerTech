@@ -1,18 +1,14 @@
-from pathlib import Path
-
 import pytest
-from sqlalchemy import create_engine, literal, select, union_all
+from sqlalchemy import literal, select, union_all
 from sqlalchemy.orm import Session
 
 from dawertech.modules.devices.application import device_service
 
 
 @pytest.fixture
-def catalog(monkeypatch):
-    # Read-only access to the existing database. The CTE supplies rows only for
-    # these SELECTs; no tables, devices, or separate databases are created.
-    database = Path(__file__).resolve().parents[1] / "inventory.sqlite3"
-    engine = create_engine(f"sqlite:///{database.as_uri()}?mode=ro&uri=true")
+def catalog(monkeypatch, motor_solo_lectura):
+    # Base principal en solo lectura: la CTE aporta las filas de estos SELECT; no se crean tablas ni bases.
+    engine = motor_solo_lectura
     rows = [
         (1, "Samsung", "Galaxy A02", "SM-A022"),
         (2, "Samsung", "Galaxy A02s", "SM-A025"),
@@ -47,7 +43,6 @@ def catalog(monkeypatch):
 
     monkeypatch.setattr(device_service, "db_session", ReadOnlyCatalog)
     yield
-    engine.dispose()
 
 
 @pytest.mark.parametrize(("search", "expected"), [

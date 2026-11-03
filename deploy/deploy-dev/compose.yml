@@ -1,0 +1,15 @@
+# Prueba en tu PC de la misma imagen que irá al VPS (D-006). Usa tu base dawer-bd de Windows; nunca crea otra.
+# Ejecútalo desde una terminal de WSL (las rutas de los volúmenes deben ser de Linux):
+#   cd "/mnt/c/Users/Alex2/Documents/Visual Code/Python/DawerTech/deploy/deploy-dev"
+#   docker compose up --build        (Ctrl+C para parar; docker compose down para borrar el contenedor)
+# Queda en http://127.0.0.1:8000 (por ejemplo, /health). Usa 127.0.0.1: con «localhost» algunos programas de Windows
+# prueban antes IPv6, que WSL no reenvía, y tardan 21 s en cada petición.
+services:
+  api:
+    build: ../../backend
+    image: dawertech-api:dev
+    env_file: .env
+    network_mode: host            # Docker en WSL con red «mirrored»: localhost es tu Windows (Postgres en 5432)
+    user: "10001:10001"
+    volumes:
+      - ../../backend/media:/app/media

@@ -16,7 +16,10 @@ def make_engine(url: str) -> Engine:
         database_path = Path(url.removeprefix("sqlite:///"))
         if database_path.parent and str(database_path.parent) != ".":
             database_path.parent.mkdir(parents=True, exist_ok=True)
-    engine = create_engine(url, pool_pre_ping=True)
+    # Sesiones en UTC: con una zona positiva, la sesión que vence en datetime.max no cabe en un datetime de Python.
+    # Pool pequeño: en el VPS cada usuario de Postgres admite 20 conexiones = 2 workers x (3+2) x 2 versiones (azul/verde).
+    postgres = {"connect_args": {"options": "-c timezone=UTC"}, "pool_size": 3, "max_overflow": 2} if url.startswith("postgresql") else {}
+    engine = create_engine(url, pool_pre_ping=True, **postgres)
     if engine.dialect.name == "sqlite":
         @event.listens_for(engine, "connect")
         def configure_sqlite(dbapi_connection, _connection_record):
@@ -51,19 +54,6 @@ def install_database(app) -> None:
     engine = make_engine(app.config["DATABASE_URL"])
     app.extensions["dawertech_engine"] = engine
     app.extensions["dawertech_session_factory"] = sessionmaker(bind=engine, expire_on_commit=False)
-
-    try:
-        from sqlalchemy import inspect, text
-        with engine.connect() as conn:
-            insp = inspect(conn)
-            if "devices" in insp.get_table_names():
-                cols = [c["name"] for c in insp.get_columns("devices")]
-                if "image_name" not in cols:
-                    conn.execute(text("ALTER TABLE devices ADD COLUMN image_name VARCHAR(80)"))
-                    conn.commit()
-    except Exception:
-        pass
-
     seed_catalog_metadata(engine)
 
 
