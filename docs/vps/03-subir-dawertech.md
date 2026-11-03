@@ -87,8 +87,11 @@ En el `.env`: la URL de `dawertechbd` (guardada en tu gestor de contraseñas, co
 6. **Subir las fotos.** Con WinSCP, arrastra los `.webp` de `media/` a `/tmp/` del VPS. Luego, en PuTTY:
 
    ```bash
-   sudo mv /tmp/*.webp /srv/apps/dawertech/data/media/ && sudo chown 10001:10001 /srv/apps/dawertech/data/media/*.webp
+   sudo mv /tmp/*.webp /srv/apps/dawertech/data/media/
+   sudo sh -c 'chown 10001:10001 /srv/apps/dawertech/data/media/*.webp && ls -l /srv/apps/dawertech/data/media/'
    ```
+
+   El `chown` va dentro de `sudo sh -c`: la carpeta es de `10001` (750) y el shell de tu usuario no puede expandir `*.webp` ahí.
 
 7. **Comprobar** en `https://dawer.cfd`:
    - [ ] Iniciar sesión con una cuenta de PythonAnywhere (las contraseñas viajan en la copia).
