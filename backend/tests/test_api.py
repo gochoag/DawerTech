@@ -9,7 +9,7 @@ from PIL import Image
 from sqlalchemy import select
 
 from dawertech import create_app
-from dawertech.shared.infrastructure.database import Base, db_session, write_session
+from dawertech.shared.infrastructure.database import Base, db_session, seed_catalog_metadata, write_session
 from dawertech.modules.auth.infrastructure.orm_models import User
 from dawertech.modules.auth.infrastructure.security import hash_password
 
@@ -30,7 +30,7 @@ def app(tmp_path):
     })
     engine = app.extensions["dawertech_engine"]
     Base.metadata.drop_all(engine)
-    Base.metadata.create_all(engine)
+    seed_catalog_metadata(engine)  # crea las tablas y repone las categorías y variantes que create_app sembró antes del drop_all
     with app.app_context(), write_session() as session:
         session.add(User(email="owner@example.com", name="Dueño", password_hash=hash_password("owner-password-123"), role="owner"))
     yield app
